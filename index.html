@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a3a5c">
 <title>Shane's Fit Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -845,6 +848,11 @@ body{
       <div id="pr-list" style="margin-top:10px"></div>
     </div>
     <div class="chart-card" style="margin-top:10px">
+      <h3>☁️ Cloud Sync</h3>
+      <div class="chart-sub">Sign in with Google and your data follows you across devices — every change saves to the cloud automatically.</div>
+      <div id="sync-body"></div>
+    </div>
+    <div class="chart-card" style="margin-top:10px">
       <h3>🎨 Theme</h3>
       <div class="chart-sub">Pick a color scheme — it saves automatically.</div>
       <div class="theme-row" id="theme-row"></div>
@@ -1092,7 +1100,11 @@ function lsGet(k){ try { return localStorage.getItem(k); } catch(e) { return (k 
 function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e) { _mem[k]=v; } }
 let ST = {};
 try { ST = JSON.parse(lsGet('sft_v2') || '{}'); } catch(e) { ST = {}; }
-function save() { lsSet('sft_v2', JSON.stringify(ST)); }
+function save() {
+  ST._m = Date.now();
+  lsSet('sft_v2', JSON.stringify(ST));
+  if(typeof schedulePush === 'function') schedulePush();
+}
 // Local date string (fixes old bug: toISOString used UTC, so evening logs
 // after ~6pm Mountain time landed on the NEXT day)
 function dstr(d) {
@@ -2113,6 +2125,101 @@ function importData(input) {
   input.value = '';
 }
 // ══════════════════════════════════════
+// CLOUD SYNC (Google sign-in → Firestore, auto-saves on every change)
+// ══════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAhtYVlq8qOKtac1MHPyfKUCGWfRiEhEYs",
+  authDomain: "shane-fitness-c1e81.firebaseapp.com",
+  projectId: "shane-fitness-c1e81",
+  storageBucket: "shane-fitness-c1e81.firebasestorage.app",
+  messagingSenderId: "1030780450026",
+  appId: "1:1030780450026:web:aaf15e52cc04a93d2b5393"
+};
+let fbUser=null, fbDb=null, fbReady=false, pushTimer=null;
+async function initSync() {
+  renderSyncCard();
+  try {
+    const v='10.14.1';
+    for(const m of ['app','auth','firestore']) {
+      await loadScript('https://www.gstatic.com/firebasejs/'+v+'/firebase-'+m+'-compat.js');
+    }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = firebase.firestore();
+    fbReady = true;
+    firebase.auth().onAuthStateChanged(async u=>{
+      fbUser = u || null;
+      renderSyncCard();
+      if(u) await pullCloud();
+    });
+  } catch(e) { fbReady=false; renderSyncCard(); }
+}
+function syncSignIn() {
+  if(!fbReady) { showToast('⚠️ Sync unavailable — check your internet connection'); return; }
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(()=>showToast('☁️ Cloud sync is on'))
+    .catch(e=>{ if(!e || e.code!=='auth/popup-closed-by-user') showToast('⚠️ Sign-in failed — try again'); });
+}
+function syncSignOut() { if(fbReady) { firebase.auth().signOut(); showToast('Signed out — data stays on this device'); } }
+function mergeStates(older, newer) {
+  const out = {...older};
+  Object.keys(newer).forEach(k=>{
+    if(k==='weights') {
+      const map={};
+      (older.weights||[]).forEach(w=>map[w.date]=w);
+      (newer.weights||[]).forEach(w=>map[w.date]=w);
+      out.weights = Object.values(map).sort((a,b)=>a.date.localeCompare(b.date));
+    } else out[k] = newer[k];
+  });
+  return out;
+}
+async function pullCloud() {
+  if(!fbUser || !fbDb) return;
+  try {
+    const snap = await fbDb.collection('users').doc(fbUser.uid).get();
+    if(snap.exists) {
+      const cloud = snap.data();
+      let cloudST = {};
+      try { cloudST = JSON.parse(cloud.data||'{}'); } catch(e){}
+      const localTs = ST._m||0, cloudTs = cloud.ts||0;
+      ST = cloudTs >= localTs ? mergeStates(ST, cloudST) : mergeStates(cloudST, ST);
+      save();
+      refreshAll(); renderThemes();
+      const t = document.body.getAttribute('data-theme')||'';
+      if((ST.theme||'classic') !== (t||'classic')) document.body.setAttribute('data-theme', ST.theme==='classic'?'':ST.theme);
+    } else {
+      schedulePush();
+    }
+  } catch(e) { showToast('⚠️ Cloud sync error — will retry on next change'); }
+  renderSyncCard();
+}
+function schedulePush() {
+  if(!fbUser || !fbDb) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(()=>{
+    fbDb.collection('users').doc(fbUser.uid)
+      .set({data: JSON.stringify(ST), ts: Date.now(), email: fbUser.email||''})
+      .then(()=>{ ST._sync = Date.now(); lsSet('sft_v2', JSON.stringify(ST)); renderSyncCard(); })
+      .catch(()=>{});
+  }, 1200);
+}
+function renderSyncCard() {
+  const el = document.getElementById('sync-body');
+  if(!el) return;
+  if(fbUser) {
+    const last = ST._sync ? new Date(ST._sync).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '—';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">✓ Syncing as ${fbUser.displayName||fbUser.email}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Last saved to cloud: ${last}</div>
+        </div>
+        <button class="weight-log-btn" style="background:var(--chip);color:var(--ink);flex-shrink:0" onclick="syncSignOut()">Sign Out</button>
+      </div>`;
+  } else {
+    el.innerHTML = `<button class="weight-log-btn" style="width:100%" onclick="syncSignIn()">Sign in with Google</button>`;
+  }
+}
+// ══════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════
 let _toast;
@@ -2152,6 +2259,10 @@ function showToast(msg){
   renderCalendar();
   renderProgress();
   renderThemes();
+  initSync();
+  if('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
 })();
 </script>
 </body>
