@@ -659,6 +659,8 @@ body{
   display:flex;align-items:center;justify-content:center;transition:transform .15s;
 }
 .sugg-add:hover{transform:scale(1.1);}
+.sr-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:12px 0 4px;}
+.sr-note{padding:12px 0;font-size:12px;color:var(--muted);font-style:italic;}
 /* Barcode scanner */
 .scan-overlay{position:fixed;inset:0;background:#000;z-index:500;display:none;flex-direction:column;}
 .scan-overlay.open{display:flex;}
@@ -689,7 +691,7 @@ body{
   <div class="hdr">
     <div class="hdr-eye">Daily Nutrition</div>
     <h1>Food &<br><em>Macros</em></h1>
-    <p class="hdr-sub">Goal: 2,600 cal · 195g protein · Summer lean</p>
+    <p class="hdr-sub" id="n-goal-sub">Goal: 2,600 cal · 195g protein</p>
     <div class="hdr-date" id="n-date">—</div>
   </div>
   <div class="nutr-wrap">
@@ -712,7 +714,7 @@ body{
         <div class="budget-stats">
           <div class="bs-row">
             <div class="bs-label">Budget</div>
-            <div class="bs-val" style="color:var(--ink)">2,600</div>
+            <div class="bs-val" style="color:var(--ink)" id="d-budget">2,600</div>
           </div>
           <div class="bs-row">
             <div class="bs-label">Burned</div>
@@ -729,19 +731,19 @@ body{
           <div class="mc-val p" id="m-protein">0g</div>
           <div class="mc-label">Protein</div>
           <div class="mc-bar-bg"><div class="mc-bar p" id="mb-protein" style="width:0%"></div></div>
-          <div style="font-size:9px;color:var(--muted);margin-top:3px">/ 195g</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-p">/ 195g</div>
         </div>
         <div class="macro-chip">
           <div class="mc-val c" id="m-carbs">0g</div>
           <div class="mc-label">Carbs</div>
           <div class="mc-bar-bg"><div class="mc-bar c" id="mb-carbs" style="width:0%"></div></div>
-          <div style="font-size:9px;color:var(--muted);margin-top:3px">/ 270g</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-c">/ 270g</div>
         </div>
         <div class="macro-chip">
           <div class="mc-val f" id="m-fat">0g</div>
           <div class="mc-label">Fat</div>
           <div class="mc-bar-bg"><div class="mc-bar f" id="mb-fat" style="width:0%"></div></div>
-          <div style="font-size:9px;color:var(--muted);margin-top:3px">/ 75g</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-f">/ 75g</div>
         </div>
       </div>
     </div>
@@ -823,7 +825,7 @@ body{
   <div class="hdr">
     <div class="hdr-eye">Body Progress</div>
     <h1>Track<br><em>Results</em></h1>
-    <p class="hdr-sub">Start: 198 lbs · Goal: 190 lbs · 6'1"</p>
+    <p class="hdr-sub" id="p-goal-sub">Start: 198 lbs · Goal: 190 lbs</p>
     <div class="hdr-date" id="p-date">—</div>
   </div>
   <div class="prog-wrap">
@@ -846,6 +848,12 @@ body{
     <div class="chart-card" style="margin-top:10px">
       <h3>🏆 Personal Records</h3>
       <div id="pr-list" style="margin-top:10px"></div>
+    </div>
+    <div class="chart-card" style="margin-top:10px">
+      <h3>👤 My Profile &amp; Goals</h3>
+      <div class="chart-sub">Your name, calorie budget, and targets — each person who uses the app has their own.</div>
+      <div id="profile-summary"></div>
+      <button class="weight-log-btn" style="width:100%" onclick="openProfile()">Edit My Goals</button>
     </div>
     <div class="chart-card" style="margin-top:10px">
       <h3>☁️ Cloud Sync</h3>
@@ -929,6 +937,49 @@ body{
   </div>
 </div>
 <!-- ════════════════════════════════════════
+  PROFILE MODAL
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="profile-modal" onclick="closeProfileModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Your <span>Goals</span></div>
+    <div class="swap-hint">Welcome! Set your own targets — everything in the app adjusts to them, and they sync with your account.</div>
+    <div class="custom-form">
+      <div class="cf-grid">
+        <div class="cf-field full">
+          <label class="cf-label">Your Name</label>
+          <input type="text" class="cf-input" id="pf-name" placeholder="e.g. Shane">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Daily Calories</label>
+          <input type="number" class="cf-input" id="pf-cal" placeholder="2600">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Protein Goal (g)</label>
+          <input type="number" class="cf-input" id="pf-protein" placeholder="195">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Carbs Goal (g)</label>
+          <input type="number" class="cf-input" id="pf-carbs" placeholder="270">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Fat Goal (g)</label>
+          <input type="number" class="cf-input" id="pf-fat" placeholder="75">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Current Weight (lbs)</label>
+          <input type="number" step="0.1" class="cf-input" id="pf-startw" placeholder="198">
+        </div>
+        <div class="cf-field">
+          <label class="cf-label">Goal Weight (lbs)</label>
+          <input type="number" step="0.1" class="cf-input" id="pf-goalw" placeholder="190">
+        </div>
+      </div>
+      <button class="cf-submit" onclick="saveProfile()">Save My Goals</button>
+    </div>
+  </div>
+</div>
+<!-- ════════════════════════════════════════
   BARCODE SCANNER
 ════════════════════════════════════════ -->
 <div class="scan-overlay" id="scan-overlay">
@@ -989,6 +1040,75 @@ const FOOD_DB = [
   {n:'Chipotle Bowl (chicken)',cal:665,p:51,c:79,f:13,e:'🌯'},
   {n:'McDonald\'s Egg McMuffin',cal:310,p:17,c:30,f:13,e:'🥚'},
   {n:'Subway 6" Turkey',cal:280,p:18,c:40,f:5,e:'🥖'},
+  // ── Expanded database ──
+  {n:'Chicken Thigh (4oz)',cal:230,p:24,c:0,f:14,e:'🍗'},{n:'Rotisserie Chicken (1/4 bird)',cal:340,p:38,c:0,f:20,e:'🍗'},
+  {n:'Ground Turkey 93% (4oz)',cal:170,p:22,c:0,f:9,e:'🦃'},{n:'Pork Chop (6oz)',cal:290,p:39,c:0,f:14,e:'🥩'},
+  {n:'Bacon (3 slices)',cal:130,p:9,c:0,f:10,e:'🥓'},{n:'Sausage Links (2)',cal:170,p:9,c:1,f:15,e:'🌭'},
+  {n:'Ham (3oz)',cal:100,p:16,c:1,f:3,e:'🍖'},{n:'Tilapia (6oz)',cal:160,p:34,c:0,f:2,e:'🐟'},
+  {n:'Cod (6oz)',cal:140,p:31,c:0,f:1,e:'🐟'},{n:'Egg Whites (1 cup)',cal:125,p:26,c:2,f:0,e:'🥚'},
+  {n:'Whole Egg (1 large)',cal:70,p:6,c:0,f:5,e:'🥚'},{n:'Tofu (1/2 block)',cal:180,p:20,c:4,f:11,e:'🧊'},
+  {n:'Protein Bar (Quest)',cal:190,p:21,c:22,f:8,e:'🍫'},{n:'Casein Shake (1 scoop)',cal:120,p:24,c:3,f:1,e:'💪'},
+  {n:'Deli Turkey (4 slices)',cal:80,p:14,c:2,f:1,e:'🦃'},{n:'Rotini w/ Meat Sauce (1.5 cup)',cal:410,p:22,c:52,f:12,e:'🍝'},
+  {n:'White Potato (medium, baked)',cal:160,p:4,c:37,f:0,e:'🥔'},{n:'French Fries (medium)',cal:365,p:4,c:48,f:17,e:'🍟'},
+  {n:'Bagel (plain)',cal:280,p:11,c:56,f:2,e:'🥯'},{n:'English Muffin',cal:130,p:5,c:25,f:1,e:'🍞'},
+  {n:'Tortilla (flour, 10in)',cal:210,p:6,c:36,f:5,e:'🫓'},{n:'Corn Tortillas (2)',cal:100,p:2,c:22,f:1,e:'🫓'},
+  {n:'Cereal w/ 2% Milk (1.5 cup)',cal:280,p:10,c:47,f:6,e:'🥣'},{n:'Granola (1/2 cup)',cal:220,p:5,c:32,f:9,e:'🥣'},
+  {n:'Pancakes (3, w/ syrup)',cal:520,p:8,c:91,f:14,e:'🥞'},{n:'Waffle (1, w/ syrup)',cal:310,p:5,c:56,f:8,e:'🧇'},
+  {n:'White Bread (2 slices)',cal:150,p:5,c:28,f:2,e:'🍞'},{n:'Rice Cakes (2)',cal:70,p:1,c:15,f:0,e:'🍘'},
+  {n:'Instant Ramen (1 pack)',cal:380,p:8,c:52,f:14,e:'🍜'},{n:'Mac & Cheese (1 cup)',cal:350,p:12,c:44,f:14,e:'🧀'},
+  {n:'Orange (medium)',cal:62,p:1,c:15,f:0,e:'🍊'},{n:'Grapes (1 cup)',cal:104,p:1,c:27,f:0,e:'🍇'},
+  {n:'Strawberries (1 cup)',cal:49,p:1,c:12,f:0,e:'🍓'},{n:'Watermelon (2 cups)',cal:92,p:2,c:23,f:0,e:'🍉'},
+  {n:'Pineapple (1 cup)',cal:82,p:1,c:22,f:0,e:'🍍'},{n:'Mango (1 cup)',cal:99,p:1,c:25,f:1,e:'🥭'},
+  {n:'Peach (medium)',cal:59,p:1,c:14,f:0,e:'🍑'},{n:'Raspberries (1 cup)',cal:64,p:1,c:15,f:1,e:'🫐'},
+  {n:'Cherries (1 cup)',cal:87,p:1,c:22,f:0,e:'🍒'},{n:'Dried Mango (1oz)',cal:100,p:0,c:25,f:0,e:'🥭'},
+  {n:'Raisins (1/4 cup)',cal:120,p:1,c:32,f:0,e:'🍇'},{n:'Applesauce (1 cup)',cal:100,p:0,c:27,f:0,e:'🍎'},
+  {n:'Carrots (1 cup)',cal:52,p:1,c:12,f:0,e:'🥕'},{n:'Cucumber (1 cup)',cal:16,p:1,c:4,f:0,e:'🥒'},
+  {n:'Green Beans (1 cup)',cal:44,p:2,c:10,f:0,e:'🫛'},{n:'Corn (1 ear)',cal:90,p:3,c:19,f:1,e:'🌽'},
+  {n:'Asparagus (1 cup)',cal:27,p:3,c:5,f:0,e:'🥬'},{n:'Brussels Sprouts (1 cup)',cal:56,p:4,c:11,f:0,e:'🥬'},
+  {n:'Cauliflower Rice (1 cup)',cal:25,p:2,c:5,f:0,e:'🥦'},{n:'Tomato (medium)',cal:22,p:1,c:5,f:0,e:'🍅'},
+  {n:'Onion (1/2 cup)',cal:32,p:1,c:7,f:0,e:'🧅'},{n:'Mushrooms (1 cup)',cal:15,p:2,c:2,f:0,e:'🍄'},
+  {n:'Guacamole (1/4 cup)',cal:90,p:1,c:5,f:8,e:'🥑'},{n:'Hummus (1/4 cup)',cal:100,p:5,c:9,f:6,e:'🫘'},
+  {n:'Black Beans (1/2 cup)',cal:110,p:7,c:20,f:0,e:'🫘'},{n:'Refried Beans (1/2 cup)',cal:120,p:7,c:20,f:2,e:'🫘'},
+  {n:'Chickpeas (1/2 cup)',cal:135,p:7,c:22,f:2,e:'🫘'},{n:'Lentils (1/2 cup)',cal:115,p:9,c:20,f:0,e:'🫘'},
+  {n:'String Cheese (1 stick)',cal:80,p:7,c:1,f:6,e:'🧀'},{n:'Mozzarella (1oz)',cal:85,p:6,c:1,f:6,e:'🧀'},
+  {n:'Feta (1oz)',cal:75,p:4,c:1,f:6,e:'🧀'},{n:'Cream Cheese (2 tbsp)',cal:100,p:2,c:2,f:9,e:'🧀'},
+  {n:'Butter (1 tbsp)',cal:102,p:0,c:0,f:12,e:'🧈'},{n:'Mayo (1 tbsp)',cal:90,p:0,c:0,f:10,e:'🥄'},
+  {n:'Ranch (2 tbsp)',cal:130,p:0,c:2,f:13,e:'🥄'},{n:'Ketchup (1 tbsp)',cal:17,p:0,c:5,f:0,e:'🥄'},
+  {n:'BBQ Sauce (2 tbsp)',cal:58,p:0,c:14,f:0,e:'🥄'},{n:'Honey (1 tbsp)',cal:64,p:0,c:17,f:0,e:'🍯'},
+  {n:'Maple Syrup (2 tbsp)',cal:104,p:0,c:27,f:0,e:'🍁'},{n:'Salsa (1/4 cup)',cal:20,p:1,c:4,f:0,e:'🍅'},
+  {n:'Walnuts (1oz)',cal:185,p:4,c:4,f:18,e:'🌰'},{n:'Cashews (1oz)',cal:157,p:5,c:9,f:12,e:'🌰'},
+  {n:'Pistachios (1oz)',cal:159,p:6,c:8,f:13,e:'🌰'},{n:'Trail Mix (1/4 cup)',cal:170,p:5,c:16,f:11,e:'🌰'},
+  {n:'Almond Butter (2 tbsp)',cal:196,p:7,c:6,f:18,e:'🥜'},{n:'Chia Seeds (2 tbsp)',cal:138,p:5,c:12,f:9,e:'🌱'},
+  {n:'Dark Chocolate (1oz)',cal:170,p:2,c:13,f:12,e:'🍫'},{n:'Chocolate Chip Cookie',cal:160,p:2,c:22,f:8,e:'🍪'},
+  {n:'Brownie (1 square)',cal:230,p:3,c:30,f:12,e:'🍫'},{n:'Ice Cream (1 cup)',cal:280,p:5,c:32,f:15,e:'🍨'},
+  {n:'Potato Chips (1oz)',cal:150,p:2,c:15,f:10,e:'🥔'},{n:'Tortilla Chips (1oz)',cal:140,p:2,c:19,f:7,e:'🌽'},
+  {n:'Popcorn (3 cups popped)',cal:95,p:3,c:19,f:1,e:'🍿'},{n:'Pretzels (1oz)',cal:110,p:3,c:23,f:1,e:'🥨'},
+  {n:'Granola Bar',cal:120,p:2,c:20,f:4,e:'🍫'},{n:'Rice Krispie Treat',cal:90,p:1,c:17,f:2,e:'🍬'},
+  {n:'Donut (glazed)',cal:260,p:3,c:31,f:14,e:'🍩'},{n:'Muffin (blueberry)',cal:380,p:5,c:53,f:17,e:'🧁'},
+  {n:'Croissant',cal:230,p:5,c:26,f:12,e:'🥐'},{n:'Pizza (2 slices cheese)',cal:570,p:24,c:72,f:20,e:'🍕'},
+  {n:'Pepperoni Pizza (2 slices)',cal:620,p:26,c:70,f:26,e:'🍕'},{n:'Cheeseburger (single)',cal:540,p:25,c:40,f:29,e:'🍔'},
+  {n:'Hamburger (single)',cal:450,p:22,c:40,f:22,e:'🍔'},{n:'Hot Dog (w/ bun)',cal:290,p:10,c:24,f:17,e:'🌭'},
+  {n:'Grilled Chicken Sandwich',cal:420,p:34,c:44,f:12,e:'🥪'},{n:'Turkey Sandwich (deli)',cal:350,p:22,c:42,f:10,e:'🥪'},
+  {n:'BLT Sandwich',cal:400,p:15,c:35,f:22,e:'🥪'},{n:'PB&J Sandwich',cal:400,p:13,c:48,f:18,e:'🥪'},
+  {n:'Grilled Cheese',cal:440,p:15,c:35,f:26,e:'🥪'},{n:'Chicken Quesadilla',cal:520,p:30,c:40,f:26,e:'🫓'},
+  {n:'Beef Tacos (2, hard shell)',cal:380,p:16,c:30,f:22,e:'🌮'},{n:'Chicken Burrito',cal:600,p:33,c:70,f:20,e:'🌯'},
+  {n:'Chick-fil-A Sandwich',cal:420,p:28,c:41,f:18,e:'🍗'},{n:'Chick-fil-A Nuggets (12)',cal:380,p:40,c:16,f:17,e:'🍗'},
+  {n:'Big Mac',cal:590,p:25,c:46,f:34,e:'🍔'},{n:'McDonald\'s 10pc McNuggets',cal:410,p:23,c:26,f:24,e:'🍗'},
+  {n:'Quarter Pounder w/ Cheese',cal:520,p:30,c:41,f:26,e:'🍔'},{n:'In-N-Out Double-Double',cal:670,p:37,c:39,f:41,e:'🍔'},
+  {n:'Five Guys Cheeseburger',cal:840,p:47,c:40,f:55,e:'🍔'},{n:'Panda Orange Chicken (1 srv)',cal:490,p:25,c:51,f:23,e:'🍗'},
+  {n:'Panera Broccoli Cheddar (bowl)',cal:360,p:14,c:30,f:21,e:'🥣'},{n:'Subway 6\" Italian BMT',cal:390,p:19,c:40,f:16,e:'🥖'},
+  {n:'Chipotle Burrito (chicken)',cal:975,p:57,c:105,f:34,e:'🌯'},{n:'Sushi Roll (California, 8pc)',cal:255,p:9,c:38,f:7,e:'🍣'},
+  {n:'Sushi Roll (Spicy Tuna, 8pc)',cal:290,p:13,c:37,f:10,e:'🍣'},{n:'Pad Thai (1.5 cups)',cal:570,p:22,c:70,f:22,e:'🍜'},
+  {n:'Fried Rice (1.5 cups)',cal:400,p:11,c:62,f:12,e:'🍚'},{n:'Chicken Noodle Soup (1.5 cup)',cal:120,p:9,c:14,f:3,e:'🍲'},
+  {n:'Chili w/ Beef (1 cup)',cal:290,p:22,c:22,f:12,e:'🍲'},{n:'Caesar Salad w/ Chicken',cal:470,p:37,c:14,f:30,e:'🥗'},
+  {n:'Cobb Salad',cal:520,p:38,c:12,f:36,e:'🥗'},{n:'Beer (12oz)',cal:150,p:1,c:13,f:0,e:'🍺'},
+  {n:'Light Beer (12oz)',cal:100,p:1,c:5,f:0,e:'🍺'},{n:'Red Wine (5oz)',cal:125,p:0,c:4,f:0,e:'🍷'},
+  {n:'Whiskey (1.5oz)',cal:100,p:0,c:0,f:0,e:'🥃'},{n:'Soda (12oz can)',cal:140,p:0,c:39,f:0,e:'🥤'},
+  {n:'Diet Soda (12oz)',cal:0,p:0,c:0,f:0,e:'🥤'},{n:'Sports Drink (20oz)',cal:130,p:0,c:34,f:0,e:'🥤'},
+  {n:'Energy Drink (16oz)',cal:160,p:0,c:40,f:0,e:'⚡'},{n:'Sugar-Free Energy Drink',cal:10,p:0,c:2,f:0,e:'⚡'},
+  {n:'Latte (16oz, 2% milk)',cal:190,p:12,c:18,f:7,e:'☕'},{n:'Cold Brew w/ Cream (16oz)',cal:110,p:2,c:5,f:9,e:'☕'},
+  {n:'Almond Milk (1 cup)',cal:39,p:1,c:3,f:3,e:'🥛'},{n:'Chocolate Milk (1 cup)',cal:210,p:8,c:26,f:8,e:'🥛'},
+  {n:'Smoothie (fruit, 16oz)',cal:280,p:4,c:65,f:1,e:'🥤'},{n:'Protein Smoothie (16oz)',cal:340,p:30,c:42,f:6,e:'🥤'},
 ];
 const MEALS = [
   {id:'breakfast', name:'Breakfast', emoji:'🌅'},
@@ -1134,6 +1254,7 @@ function setViewDate(ds) {
 }
 function backToToday() { setViewDate(todayReal()); showToast('📅 Back to today'); }
 function refreshAll() {
+  if(typeof applyProfileUI==='function') applyProfileUI();
   updateDateUI();
   buildMealBlocks(); updateBudget(); buildWater();
   buildWorkout();
@@ -1238,7 +1359,8 @@ function updateBudget() {
     const dd = ST[today()]?.[d.key];
     if(dd?.cardio?.calories) burned+=parseFloat(dd.cardio.calories)||0;
   });
-  const budget=2600, remaining=budget-cal+burned;
+  const gp=prof();
+  const budget=gp.cal, remaining=budget-cal+burned;
   document.getElementById('d-eaten').textContent = Math.round(cal);
   document.getElementById('d-burned').textContent = Math.round(burned);
   const remEl = document.getElementById('d-remaining');
@@ -1252,9 +1374,9 @@ function updateBudget() {
   document.getElementById('m-protein').textContent = Math.round(p)+'g';
   document.getElementById('m-carbs').textContent = Math.round(c)+'g';
   document.getElementById('m-fat').textContent = Math.round(f)+'g';
-  document.getElementById('mb-protein').style.width = Math.min(p/195*100,100)+'%';
-  document.getElementById('mb-carbs').style.width = Math.min(c/270*100,100)+'%';
-  document.getElementById('mb-fat').style.width = Math.min(f/75*100,100)+'%';
+  document.getElementById('mb-protein').style.width = Math.min(p/gp.protein*100,100)+'%';
+  document.getElementById('mb-carbs').style.width = Math.min(c/gp.carbs*100,100)+'%';
+  document.getElementById('mb-fat').style.width = Math.min(f/gp.fat*100,100)+'%';
   renderSuggestions();
 }
 function delFood(mealId, foodId) {
@@ -1288,7 +1410,7 @@ function openModal(mealId, mealName, e) {
   currentMealId = mealId;
   document.getElementById('modal-meal-name').textContent = mealName;
   document.getElementById('food-search').value='';
-  document.getElementById('search-results').innerHTML='';
+  document.getElementById('search-results').innerHTML=renderRecents();
   clearCustomForm();
   document.getElementById('food-modal').classList.add('open');
   setTimeout(()=>document.getElementById('food-search').focus(),300);
@@ -1298,27 +1420,71 @@ function closeModal(e) {
     document.getElementById('food-modal').classList.remove('open');
   }
 }
+let SR=[], offTimer=null, searchSeq=0;
+function srItem(food) {
+  const i = SR.push(food)-1;
+  return `
+    <div class="search-result-item" onclick="pickSearchFood(${i})">
+      <div class="sri-icon">${food.e||'🍽️'}</div>
+      <div class="sri-info">
+        <div class="sri-name">${food.n}</div>
+        <div class="sri-meta">${food.p}g P · ${food.c}g C · ${food.f}g F</div>
+      </div>
+      <div><div class="sri-cal">${food.cal}<span> cal</span></div></div>
+    </div>`;
+}
+function srLabel(t){ return `<div class="sr-label">${t}</div>`; }
+function pickSearchFood(i) {
+  const food = SR[i];
+  if(food) commitFood({ n:food.n, cal:food.cal, p:food.p, c:food.c, f:food.f, e:food.e });
+}
+function renderRecents() {
+  SR=[];
+  const mine=(ST.myfoods||[]).slice(0,6);
+  if(!mine.length) return '<div class="sr-note">Search any food, or scan a barcode — foods you log appear here for one-tap re-adding.</div>';
+  return srLabel('★ Recent foods') + mine.map(srItem).join('');
+}
+function offToFood(prod) {
+  if(!prod || !prod.product_name) return null;
+  const n = prod.nutriments||{};
+  const perServ = n['energy-kcal_serving']!=null;
+  const cal = Math.round(perServ ? n['energy-kcal_serving'] : (n['energy-kcal_100g']||0));
+  if(!cal || cal<5) return null;
+  const pick = k => { const v = perServ ? n[k+'_serving'] : n[k+'_100g']; return v!=null ? Math.round(parseFloat(v)*10)/10 : 0; };
+  let name = (prod.brands ? prod.brands.split(',')[0]+' ' : '') + prod.product_name.trim();
+  name += perServ ? (prod.serving_size ? ' ('+prod.serving_size+')' : ' (1 serving)') : ' (per 100g)';
+  return { n:name.slice(0,80), cal, p:pick('proteins'), c:pick('carbohydrates'), f:pick('fat'), e:'🌐' };
+}
 function searchFood(q) {
   const container = document.getElementById('search-results');
-  if(!q.trim()) { container.innerHTML=''; return; }
-  const results = FOOD_DB.filter(f=>f.n.toLowerCase().includes(q.toLowerCase())).slice(0,8);
-  if(!results.length) { container.innerHTML='<div style="padding:12px 0;font-size:13px;color:var(--muted)">No matches — use custom entry below</div>'; return; }
-  container.innerHTML = results.map((f,i)=>`
-    <div class="search-result-item" onclick="addFromSearch(${i}, this.dataset.q)" data-q="${q.replace(/"/g,'&quot;')}">
-      <div class="sri-icon">${f.e}</div>
-      <div class="sri-info">
-        <div class="sri-name">${f.n}</div>
-        <div class="sri-meta">${f.p}g P · ${f.c}g C · ${f.f}g F</div>
-      </div>
-      <div><div class="sri-cal">${f.cal}<span> cal</span></div></div>
-    </div>
-  `).join('');
-}
-function addFromSearch(idx, q) {
-  const results = FOOD_DB.filter(f=>f.n.toLowerCase().includes(q.toLowerCase())).slice(0,8);
-  const food = results[idx];
-  if(!food) return;
-  commitFood({ n:food.n, cal:food.cal, p:food.p, c:food.c, f:food.f, e:food.e });
+  clearTimeout(offTimer);
+  if(!q.trim()) { container.innerHTML = renderRecents(); return; }
+  SR=[];
+  const seq = ++searchSeq;
+  const ql = q.toLowerCase();
+  const mine = (ST.myfoods||[]).filter(f=>f.n.toLowerCase().includes(ql)).slice(0,3);
+  const local = FOOD_DB.filter(f=>f.n.toLowerCase().includes(ql)).slice(0,8);
+  let html = '';
+  if(mine.length) html += srLabel('★ My foods') + mine.map(srItem).join('');
+  if(local.length) html += mine.length?srLabel('Common foods'):'' , html += local.map(srItem).join('');
+  html += `<div class="sr-note" id="off-status">Searching the big food database…</div>`;
+  container.innerHTML = html;
+  offTimer = setTimeout(async ()=>{
+    try {
+      const r = await fetch('https://world.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=6&fields=product_name,brands,nutriments,serving_size&search_terms='+encodeURIComponent(q));
+      const j = await r.json();
+      if(seq !== searchSeq) return;
+      const prods = (j.products||[]).map(offToFood).filter(Boolean).slice(0,5);
+      const el = document.getElementById('off-status');
+      if(!el) return;
+      el.outerHTML = prods.length
+        ? srLabel('🌐 Food database') + prods.map(srItem).join('')
+        : '<div class="sr-note">No database matches — use custom entry below</div>';
+    } catch(e) {
+      const el = document.getElementById('off-status');
+      if(el) el.textContent = 'Big database needs internet — showing built-in foods';
+    }
+  }, 450);
 }
 function addCustomFood() {
   const name = document.getElementById('cf-name').value.trim();
@@ -1333,6 +1499,8 @@ function commitFood(food) {
   const nd = nutrData();
   if(!nd.meals[currentMealId]) nd.meals[currentMealId]=[];
   nd.meals[currentMealId].push({ ...food, id:Date.now() });
+  ST.myfoods = [{n:food.n,cal:food.cal,p:food.p,c:food.c,f:food.f,e:food.e},
+    ...(ST.myfoods||[]).filter(x=>x.n!==food.n)].slice(0,100);
   save();
   document.getElementById('food-modal').classList.remove('open');
   buildMealBlocks(); updateBudget();
@@ -1361,8 +1529,9 @@ function renderSuggestions() {
     const dd=ST[today()]?.[d.key];
     if(dd?.cardio?.calories) burned+=parseFloat(dd.cardio.calories)||0;
   });
-  const remCal = 2600 - cal + burned;
-  const remP = Math.max(0, 195 - p);
+  const gp = prof();
+  const remCal = gp.cal - cal + burned;
+  const remP = Math.max(0, gp.protein - p);
   if(remCal <= 60) {
     el.innerHTML = `<div class="sugg-head">✨ Suggested For You</div>
       <div class="sugg-reason">You've hit your calorie budget for the day — nice work. Water and rest from here. 💧</div>`;
@@ -1974,8 +2143,9 @@ function drawChart(weights) {
     ctx.fillText('Log your weight to see chart',W/2,H/2);
     return;
   }
+  const pr=prof();
   const vals=weights.map(w=>w.w);
-  const all=[...vals,190,198];
+  const all=[...vals,pr.goalW,pr.startW];
   const minY=Math.min(...all)-2, maxY=Math.max(...all)+2;
   const pad={t:12,r:12,b:28,l:42};
   const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
@@ -1983,14 +2153,14 @@ function drawChart(weights) {
   const yS=v=>pad.t+cH-((v-minY)/(maxY-minY))*cH;
   // goal line
   ctx.beginPath(); ctx.strokeStyle=hexRgba(G,.35); ctx.setLineDash([4,4]); ctx.lineWidth=1.5;
-  ctx.moveTo(pad.l,yS(190)); ctx.lineTo(W-pad.r,yS(190)); ctx.stroke();
+  ctx.moveTo(pad.l,yS(pr.goalW)); ctx.lineTo(W-pad.r,yS(pr.goalW)); ctx.stroke();
   ctx.setLineDash([]); ctx.fillStyle=hexRgba(G,.65); ctx.font='9px Barlow,sans-serif';
-  ctx.fillText('Goal 190',pad.l+4,yS(190)-4);
+  ctx.fillText('Goal '+pr.goalW,pad.l+4,yS(pr.goalW)-4);
   // start line
   ctx.beginPath(); ctx.strokeStyle=hexRgba(O,.3); ctx.setLineDash([4,4]); ctx.lineWidth=1;
-  ctx.moveTo(pad.l,yS(198)); ctx.lineTo(W-pad.r,yS(198)); ctx.stroke();
+  ctx.moveTo(pad.l,yS(pr.startW)); ctx.lineTo(W-pad.r,yS(pr.startW)); ctx.stroke();
   ctx.setLineDash([]); ctx.fillStyle=hexRgba(O,.6); ctx.font='9px Barlow,sans-serif';
-  ctx.fillText('Start 198',pad.l+4,yS(198)-4);
+  ctx.fillText('Start '+pr.startW,pad.l+4,yS(pr.startW)-4);
   if(weights.length>1){
     // gradient fill
     const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
@@ -2220,6 +2390,58 @@ function renderSyncCard() {
   }
 }
 // ══════════════════════════════════════
+// PROFILE & PERSONAL GOALS (per user, synced)
+// ══════════════════════════════════════
+const PROF_DEFAULTS = {name:'', cal:2600, protein:195, carbs:270, fat:75, startW:198, goalW:190};
+function prof(){ return {...PROF_DEFAULTS, ...(ST.profile||{})}; }
+function openProfile() {
+  const p = prof();
+  document.getElementById('pf-name').value = p.name||'';
+  document.getElementById('pf-cal').value = p.cal;
+  document.getElementById('pf-protein').value = p.protein;
+  document.getElementById('pf-carbs').value = p.carbs;
+  document.getElementById('pf-fat').value = p.fat;
+  document.getElementById('pf-startw').value = p.startW;
+  document.getElementById('pf-goalw').value = p.goalW;
+  document.getElementById('profile-modal').classList.add('open');
+}
+function closeProfileModal(e) {
+  if(e.target === document.getElementById('profile-modal'))
+    document.getElementById('profile-modal').classList.remove('open');
+}
+function saveProfile() {
+  const num=(id,d)=>{ const v=parseFloat(document.getElementById(id).value); return (isNaN(v)||v<=0)?d:v; };
+  ST.profile = {
+    name: document.getElementById('pf-name').value.trim(),
+    cal: Math.round(num('pf-cal',2600)),
+    protein: Math.round(num('pf-protein',195)),
+    carbs: Math.round(num('pf-carbs',270)),
+    fat: Math.round(num('pf-fat',75)),
+    startW: num('pf-startw',198),
+    goalW: num('pf-goalw',190),
+  };
+  save();
+  document.getElementById('profile-modal').classList.remove('open');
+  applyProfileUI(); updateBudget(); renderProgress();
+  showToast('✅ Goals saved'+(fbUser?' & synced':''));
+}
+function applyProfileUI() {
+  const p = prof();
+  const fmt = n=>Math.round(n).toLocaleString();
+  const e1=document.getElementById('n-goal-sub');
+  if(e1) e1.textContent = `Goal: ${fmt(p.cal)} cal · ${p.protein}g protein${p.name?` · ${p.name}`:''}`;
+  const e2=document.getElementById('p-goal-sub');
+  if(e2) e2.textContent = `Start: ${p.startW} lbs · Goal: ${p.goalW} lbs`;
+  const e3=document.getElementById('d-budget'); if(e3) e3.textContent = fmt(p.cal);
+  const mp=document.getElementById('mg-p'); if(mp) mp.textContent='/ '+p.protein+'g';
+  const mc=document.getElementById('mg-c'); if(mc) mc.textContent='/ '+p.carbs+'g';
+  const mf=document.getElementById('mg-f'); if(mf) mf.textContent='/ '+p.fat+'g';
+  const ps=document.getElementById('profile-summary');
+  if(ps) ps.innerHTML = ST.profile
+    ? `<div style="font-size:13px;font-weight:600;margin-bottom:10px">${p.name||'No name set'} · ${fmt(p.cal)} cal · ${p.protein}g protein · ${p.startW} → ${p.goalW} lbs</div>`
+    : `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-style:italic">Using default goals — set your own below.</div>`;
+}
+// ══════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════
 let _toast;
@@ -2259,6 +2481,8 @@ function showToast(msg){
   renderCalendar();
   renderProgress();
   renderThemes();
+  applyProfileUI();
+  if(!ST.profile) setTimeout(openProfile, 500); // first-run: ask for your own goals
   initSync();
   if('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(()=>{});
