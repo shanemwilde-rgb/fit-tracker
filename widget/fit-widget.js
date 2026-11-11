@@ -594,7 +594,9 @@ function renderFace(family, model, dark, opts) {
   const pal = palette(!!dark);
   if (showWallpaper) paintSampleWallpaper(dc, size.w, size.h);
   else if (!transparent) paintBackground(dc, size.w, size.h, pal);
-  if (transparent) paintScrim(dc, size.w, size.h, pal);
+  // A full-widget tint reads as a pale card and hides the wallpaper.
+  // Only the old preview path asks for that scrim. The live widget never does.
+  if (opts.scrim) paintScrim(dc, size.w, size.h, pal);
   if (model && model.kind && model.kind !== "ready") paintMessage(dc, size.w, size.h, pal, model);
   else if (fam === "small") paintSmall(dc, size.w, size.h, pal, model);
   else if (fam === "large") paintLarge(dc, size.w, size.h, pal, model);
@@ -625,17 +627,84 @@ function phoneTable() {
     "1624": { small: 310, medium: 658, large: 690, left: 46, right: 394, top: 142, middle: 522, bottom: 902 },
     "2208": { small: 471, medium: 1044, large: 1071, left: 99, right: 672, top: 114, middle: 696, bottom: 1278 },
     "2001": { small: 444, medium: 963, large: 972, left: 81, right: 600, top: 90, middle: 618, bottom: 1146 },
-    "1136": { small: 282, medium: 584, large: 622, left: 30, right: 332, top: 59, middle: 399, bottom: 399 }
+    "1136": { small: 282, medium: 584, large: 622, left: 30, right: 332, top: 59, middle: 399, bottom: 399 },
+    // iPhone Air: 420×912 pt @3x = 1260×2736. Frames are the 2796 (Plus / Pro Max class) measurements scaled by 2736/2796.
+    "2736": { text: { small: 499, medium: 1069, large: 1121, left: 96, right: 666, top: 247, middle: 869, bottom: 1491 }, notext: { small: 519, medium: 1115, large: 1112, left: 73, right: 669, top: 247, middle: 840, bottom: 1433 } },
+    // iPhone 13 mini: 360×780 pt @3x = 1080×2340. Scaled from the 2436 mini measurements.
+    "2340": { small: 447, medium: 948, large: 994, left: 66, right: 568, top: 222, middle: 769, bottom: 1317 }
   };
 }
 
-function lookupPhone(height, width) {
+// Pixel height → phones that share it (points × scale):
+// 2868: 16/17/18 Pro Max (440×956 @3)
+// 2796: 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus (430×932 @3)
+// 2736: iPhone Air (420×912 @3)
+// 2622: 16 Pro, 17, 17 Pro, 18 Pro (402×874 @3)
+// 2556: 14 Pro, 15, 15 Pro, 16 (393×852 @3)
+// 2532: 12, 12 Pro, 13, 13 Pro, 14, 16e, 17e (390×844 @3)
+// 2436: 11 Pro / XS / X, or 12 mini (375×812 @3)
+// 2340: 13 mini (360×780 @3)
+// 2778: 12 Pro Max, 13 Pro Max, 14 Plus (428×926 @3)
+// 2688: 11 Pro Max, XS Max (414×896 @3)
+// 1792: 11, XR (414×896 @2)
+// 1334: SE 2/3, 8, 7, 6s (375×667 @2)
+// 1136: SE 1 (320×568 @2)
+
+function deviceScaleForPixels(pixelHeight) {
+  const h = String(Math.round(Number(pixelHeight) || 0));
+  if (h === "1334" || h === "1136" || h === "1792" || h === "1624") return 2;
+  return 3;
+}
+
+function classifyScreenshot(width, height) {
   const table = phoneTable();
-  const h = String(Math.round(Number(height) || 0));
-  const w = String(Math.round(Number(width) || 0));
-  if (table[h]) return { height: h, entry: table[h] };
-  if (table[w]) return { height: w, entry: table[w] };
-  return null;
+  const W = Math.round(Number(width) || 0);
+  const H = Math.round(Number(height) || 0);
+  const known = function (n) { return !!table[String(Math.round(n))]; };
+  if (known(H) || known(W)) {
+    if (!known(H) && known(W) && W > H) return { kind: "sideways", width: W, height: H };
+    return { kind: "pixels", width: W, height: H };
+  }
+  if (known(H / 2) || known(W / 2)) return { kind: "doubled", width: W, height: H };
+  const scales = [3, 2];
+  for (let i = 0; i < scales.length; i++) {
+    const s = scales[i];
+    if (known(H * s) || known(W * s)) {
+      return { kind: "points", width: W, height: H, scale: s, pixelWidth: Math.round(W * s), pixelHeight: Math.round(H * s) };
+    }
+  }
+  return { kind: "unknown", width: W, height: H };
+}
+
+function lookupPhone(height, width) {
+  const shot = classifyScreenshot(width, height);
+  if (!shot || shot.kind === "unknown" || shot.kind === "doubled" || shot.kind === "sideways") return null;
+  const table = phoneTable();
+  const pixelH = shot.kind === "points" ? shot.pixelHeight : shot.height;
+  const pixelW = shot.kind === "points" ? shot.pixelWidth : shot.width;
+  const entry = table[String(pixelH)] || table[String(pixelW)];
+  if (!entry) return null;
+  const matched = table[String(pixelH)] ? pixelH : pixelW;
+  return { height: String(matched), entry: entry, shot: shot, scale: deviceScaleForPixels(matched) };
+}
+
+function cropPlacement(reportedW, reportedH, crop, deviceScale) {
+  const shot = classifyScreenshot(reportedW, reportedH);
+  if (!shot || shot.kind === "unknown" || shot.kind === "doubled" || shot.kind === "sideways") return shot;
+  const scale = deviceScale || (shot.kind === "points" ? shot.scale : deviceScaleForPixels(shot.height));
+  const imageIsPixels = shot.kind === "pixels";
+  return {
+    kind: shot.kind,
+    scale: scale,
+    contextW: crop.w / scale,
+    contextH: crop.h / scale,
+    destX: -crop.x / scale,
+    destY: -crop.y / scale,
+    destW: imageIsPixels ? reportedW / scale : reportedW,
+    destH: imageIsPixels ? reportedH / scale : reportedH,
+    pixelW: crop.w,
+    pixelH: crop.h
+  };
 }
 
 function resolvePhone(entry, choices) {
@@ -661,11 +730,38 @@ function cropFor(spec, size, position) {
   };
 }
 
-function cropWallpaper(img, crop) {
+function screenScale() {
+  try {
+    if (typeof Device !== "undefined" && Device.screenScale) return Device.screenScale();
+  } catch (e) {}
+  return 3;
+}
+
+function cropWallpaper(img, crop, deviceScale) {
+  const place = cropPlacement(img.size.width, img.size.height, crop, deviceScale || screenScale());
+  if (!place || place.kind === "unknown" || place.kind === "doubled") return null;
   const draw = new DrawContext();
-  draw.size = new Size(crop.w, crop.h);
-  draw.drawImageAtPoint(img, new Point(-crop.x, -crop.y));
+  // Point size × screen scale = crop pixels, so the widget does not scale the photo down.
+  draw.opaque = true;
+  draw.respectScreenScale = true;
+  draw.size = new Size(place.contextW, place.contextH);
+  const rect = new Rect(place.destX, place.destY, place.destW, place.destH);
+  if (draw.drawImageInRect) draw.drawImageInRect(img, rect);
+  else draw.drawImageAtPoint(img, new Point(place.destX, place.destY));
   return draw.getImage();
+}
+
+function screenshotHelp(shot) {
+  const how = "Long-press the home screen until the icons jiggle. Swipe to the last page. That page must be empty, with no widgets on it. Take a normal screenshot (side button and volume up). If this widget is already in the photo, it will look doubled.";
+  const w = shot ? shot.width : 0;
+  const h = shot ? shot.height : 0;
+  if (shot && shot.kind === "doubled") {
+    return "This photo is " + w + "×" + h + " pixels, about twice a normal iPhone screenshot, so the crop would be blurry and doubled. " + how;
+  }
+  if (shot && shot.kind === "sideways") {
+    return "This photo is sideways (" + w + "×" + h + "). Hold the phone upright, in jiggle mode, on the empty page, and take the screenshot again. " + how;
+  }
+  return "This photo is " + w + "×" + h + " pixels, which is not a known iPhone screen. " + how;
 }
 
 function bgName(family) {
@@ -732,21 +828,26 @@ async function choose(title, message, options) {
 
 async function setupBackground() {
   const ready = await choose(
-    "Empty home screen",
-    "Swipe to a blank home screen page with no widgets. Take a screenshot (side button and volume up), then come back and choose it.",
+    "Empty page, jiggle mode",
+    "Long-press the home screen until the icons jiggle. Swipe to the last page. It must be empty, with no widgets. Take a screenshot, then come back. A page that already shows this widget will look doubled.",
     ["Choose screenshot"]
   );
   if (!ready) return;
   const img = await Photos.fromLibrary();
+  const shot = classifyScreenshot(img.size.width, img.size.height);
+  if (!shot || shot.kind === "unknown" || shot.kind === "doubled" || shot.kind === "sideways") {
+    await choose("Use a different screenshot", screenshotHelp(shot), ["OK"]);
+    return;
+  }
   const found = lookupPhone(img.size.height, img.size.width);
   if (!found) {
-    await choose("Phone not recognized", "That photo's height doesn't match a known iPhone screenshot. Use a full-screen shot of the empty home screen page.", ["OK"]);
+    await choose("Use a different screenshot", screenshotHelp(shot), ["OK"]);
     return;
   }
   const choices = {};
   if (found.entry.x || found.entry.mini) {
     const model = await choose("Which iPhone?", "This screen size is shared by two phones.", [
-      { label: "iPhone 13 mini or 12 mini", value: "mini" },
+      { label: "iPhone 12 mini", value: "mini" },
       { label: "iPhone 11 Pro, XS, or X", value: "x" }
     ]);
     if (!model) return;
@@ -766,14 +867,30 @@ async function setupBackground() {
   if (!size) return;
   const family = size.toLowerCase();
   let positions;
-  if (family === "small") positions = ["Top left", "Top right", "Middle left", "Middle right", "Bottom left", "Bottom right"];
-  else if (family === "medium") positions = ["Top", "Middle", "Bottom"];
-  else positions = ["Top", "Bottom"];
-  const note = found.height === "1136" ? " This phone only has two widget rows, so middle and bottom match." : "";
-  const position = await choose("Widget position", "Where on the empty page will this " + family + " widget sit?" + note, positions);
+  let positionTitle;
+  let positionHelp;
+  if (family === "small") {
+    positions = ["Top left", "Top right", "Middle left", "Middle right", "Bottom left", "Bottom right"];
+    positionTitle = "Small widget position";
+    positionHelp = "Top left / Top right / Middle left / Middle right / Bottom left / Bottom right";
+  } else if (family === "medium") {
+    positions = ["Top", "Middle", "Bottom"];
+    positionTitle = "Medium widget position";
+    positionHelp = "Top / Middle / Bottom. A medium widget spans both columns.";
+  } else {
+    positions = ["Top", "Bottom"];
+    positionTitle = "Large widget position";
+    positionHelp = "Top / Bottom. A large widget covers two rows. Bottom means the lower two rows.";
+  }
+  if (found.height === "1136") positionHelp += " This phone only has two rows, so middle and bottom match.";
+  const position = await choose(positionTitle, positionHelp, positions);
   if (!position) return;
   const crop = cropFor(spec, family, position);
-  const image = cropWallpaper(img, crop);
+  const image = cropWallpaper(img, crop, found.scale);
+  if (!image) {
+    await choose("Use a different screenshot", screenshotHelp(shot), ["OK"]);
+    return;
+  }
   const store = openStorage();
   store.fm.writeImage(bgPath(store, family), image);
   const where = store.icloud ? "iCloud" : "this iPhone";
