@@ -1374,8 +1374,6 @@ function nutritionTotalsFor(dateStr) {
   const budget = gp.cal, proteinGoal = gp.protein;
   return {
     cal, p, c, f, burned, budget, proteinGoal,
-    carbGoal: gp.carbs,
-    fatGoal: gp.fat,
     caloriesEaten: Math.round(cal),
     calorieGoal: Math.round(budget),
     protein: Math.round(p),
@@ -2487,15 +2485,13 @@ function widgetLast7() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const date = shiftDenverDate(end, -i);
-    let calories = 0, protein = 0, carbs = 0, fat = 0;
+    let calories = 0, protein = 0;
     try {
       const t = nutritionTotalsFor(date);
       calories = widgetAsInt(t.caloriesEaten);
       protein = widgetAsInt(t.protein);
-      carbs = widgetAsInt(Math.round(t.c));
-      fat = widgetAsInt(Math.round(t.f));
     } catch(e) {}
-    days.push({ date: date, calories: calories, protein: protein, carbs: carbs, fat: fat });
+    days.push({ date: date, calories: calories, protein: protein });
   }
   return days;
 }
@@ -2537,12 +2533,8 @@ function widgetSummary() {
   // when the account has no saved goals, and the fallback if a value isn't a number.
   const storedCal = Number(t.budget);
   const storedPro = Number(t.proteinGoal);
-  const storedCarb = Number(t.carbGoal);
-  const storedFat = Number(t.fatGoal);
-  const calorieGoal = isFinite(storedCal) ? Math.round(storedCal) : PROF_DEFAULTS.cal;
-  const proteinGoal = isFinite(storedPro) ? Math.round(storedPro) : PROF_DEFAULTS.protein;
-  const carbsGoal = isFinite(storedCarb) ? Math.round(storedCarb) : PROF_DEFAULTS.carbs;
-  const fatGoal = isFinite(storedFat) ? Math.round(storedFat) : PROF_DEFAULTS.fat;
+  const calorieGoal = isFinite(storedCal) ? Math.round(storedCal) : 2600;
+  const proteinGoal = isFinite(storedPro) ? Math.round(storedPro) : 195;
   let caloriesRemaining = t.caloriesRemaining;
   if (!isFinite(storedCal) || !isFinite(caloriesRemaining)) {
     caloriesRemaining = Math.round(calorieGoal - (Number(t.cal) || 0) + (Number(t.burned) || 0));
@@ -2554,10 +2546,6 @@ function widgetSummary() {
     calorieGoal: asInt(calorieGoal),
     protein: asInt(t.protein),
     proteinGoal: asInt(proteinGoal),
-    carbs: asInt(Math.round(t.c)),
-    carbsGoal: asInt(carbsGoal),
-    fat: asInt(Math.round(t.f)),
-    fatGoal: asInt(fatGoal),
     caloriesRemaining: asInt(caloriesRemaining)
   };
 }
@@ -2578,10 +2566,6 @@ function writeWidgetSummary(key) {
       calorieGoal: s.calorieGoal,
       protein: s.protein,
       proteinGoal: s.proteinGoal,
-      carbs: s.carbs,
-      carbsGoal: s.carbsGoal,
-      fat: s.fat,
-      fatGoal: s.fatGoal,
       caloriesRemaining: s.caloriesRemaining,
       updatedAt: updatedAt,
       ownerUid: fbUser.uid
@@ -2604,8 +2588,8 @@ function renderWidgetCard() {
         const r = Math.round(Number(v));
         return isFinite(r) ? r.toLocaleString('en-US') : '0';
       };
-      const line = n(s.caloriesEaten)+' / '+n(s.calorieGoal)+' cal · '+n(s.protein)+' / '+n(s.proteinGoal)+'g protein · '+n(s.fat)+' / '+n(s.fatGoal)+'g fat · '+n(s.carbs)+' / '+n(s.carbsGoal)+'g carbs · '+n(s.caloriesRemaining)+' left';
-      preview = `<div class="widget-today" id="widget-today" data-date="${escapeHtml(s.date)}" data-eaten="${s.caloriesEaten}" data-goal="${s.calorieGoal}" data-protein="${s.protein}" data-pgoal="${s.proteinGoal}" data-fat="${s.fat}" data-fgoal="${s.fatGoal}" data-carbs="${s.carbs}" data-cgoal="${s.carbsGoal}" data-left="${s.caloriesRemaining}">${escapeHtml(line)}</div>`;
+      const line = n(s.caloriesEaten)+' / '+n(s.calorieGoal)+' cal · '+n(s.protein)+' / '+n(s.proteinGoal)+'g protein · '+n(s.caloriesRemaining)+' left';
+      preview = `<div class="widget-today" id="widget-today" data-date="${escapeHtml(s.date)}" data-eaten="${s.caloriesEaten}" data-goal="${s.calorieGoal}" data-protein="${s.protein}" data-pgoal="${s.proteinGoal}" data-left="${s.caloriesRemaining}">${escapeHtml(line)}</div>`;
     } catch(e) { preview = ''; }
     const key = isWidgetKey(ST && ST.widgetKey) ? ST.widgetKey : '';
     if (!key) {
@@ -2617,7 +2601,7 @@ function renderWidgetCard() {
     }
     const signedOut = fbUser ? '' : `<div class="widget-note">Sign in with Google in Cloud Sync above so this key stays saved to your account and today’s totals keep updating.</div>`;
     el.innerHTML = preview + signedOut + `
-      <div class="widget-note">Paste this over any older Scriptable script, then run it in the Scriptable app. It asks for an empty home-screen screenshot so the widget can sit on your wallpaper, and it shows fat and carbs too. Your key is already filled in.</div>
+      <div class="widget-note">Paste this over any older Scriptable script. It draws calorie and protein rings on a solid background, calories left, and a 7-day chart on medium and large. Your key is already filled in. Any wallpaper image saved earlier is ignored.</div>
       <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Widget key</div>
       <div class="widget-key" id="widget-key">${escapeHtml(key)}</div>
       <button class="weight-log-btn" id="widget-copy" style="width:100%" onclick="copyWidgetScript()">Copy Script</button>`;
@@ -2631,7 +2615,7 @@ async function copyWidgetScript() {
     if (fbUser) { try { schedulePush(); } catch(e) {} }
     let script = '';
     try {
-      const res = await fetch('widget/fit-widget.js?v=6', {cache:'no-store'});
+      const res = await fetch('widget/fit-widget.js?v=7', {cache:'no-store'});
       if (!res.ok) throw new Error('load');
       script = await res.text();
     } catch(e) {
@@ -2639,7 +2623,7 @@ async function copyWidgetScript() {
       return;
     }
     const marker = 'const WIDGET_KEY = "PASTE_YOUR_KEY";';
-    if (script.indexOf(marker) === -1 || script.indexOf('respectScreenScale = false') === -1 || script.indexOf('Solid color from screenshot') === -1 || script.indexOf('fatGoal') === -1) {
+    if (script.indexOf(marker) === -1 || script.indexOf('DrawContext') === -1 || script.indexOf('last7') === -1 || script.indexOf('FileManager') !== -1 || script.indexOf('fatGoal') !== -1) {
       showToast('⚠️ Widget script didn’t look right — try again');
       return;
     }
