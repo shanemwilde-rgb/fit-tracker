@@ -1,6 +1,6 @@
 // Shane's Fit Tracker — service worker
 // Network-first for same-origin requests (fresh updates), cache fallback (offline support).
-const CACHE = 'fit-tracker-v3';
+const CACHE = 'fit-tracker-v4';
 
 self.addEventListener('install', e => { self.skipWaiting(); });
 
