@@ -2615,7 +2615,7 @@ async function copyWidgetScript() {
     if (fbUser) { try { schedulePush(); } catch(e) {} }
     let script = '';
     try {
-      const res = await fetch('widget/fit-widget.js?v=7', {cache:'no-store'});
+      const res = await fetch('widget/fit-widget.js?v=8', {cache:'no-store'});
       if (!res.ok) throw new Error('load');
       script = await res.text();
     } catch(e) {
@@ -2623,7 +2623,7 @@ async function copyWidgetScript() {
       return;
     }
     const marker = 'const WIDGET_KEY = "PASTE_YOUR_KEY";';
-    if (script.indexOf(marker) === -1 || script.indexOf('DrawContext') === -1 || script.indexOf('last7') === -1 || script.indexOf('FileManager') !== -1 || script.indexOf('fatGoal') !== -1) {
+    if (script.indexOf(marker) === -1 || script.indexOf('DrawContext') === -1 || script.indexOf('last7') === -1 || script.indexOf('stays on the dark palette') === -1 || script.indexOf('FileManager') !== -1 || script.indexOf('fatGoal') !== -1) {
       showToast('⚠️ Widget script didn’t look right — try again');
       return;
     }
