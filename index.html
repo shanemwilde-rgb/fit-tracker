@@ -680,6 +680,13 @@ body{
   pointer-events:none;
 }
 .scan-hint{padding:16px 16px 36px;text-align:center;color:rgba(255,255,255,.65);font-size:13px;}
+.widget-note{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:10px;}
+.widget-today{font-size:13px;font-weight:600;margin-bottom:10px;}
+.widget-key{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;line-height:1.45;word-break:break-all;
+  background:var(--chip);border-radius:8px;padding:8px 10px;margin:0 0 10px;
+}
 </style>
 </head>
 <body>
@@ -859,6 +866,11 @@ body{
       <h3>☁️ Cloud Sync</h3>
       <div class="chart-sub">Sign in with Google and your data follows you across devices — every change saves to the cloud automatically.</div>
       <div id="sync-body"></div>
+    </div>
+    <div class="chart-card" style="margin-top:10px">
+      <h3>📱 iPhone Widget</h3>
+      <div class="chart-sub">Home-screen calories and protein in the free Scriptable app. Tap the widget to open Fit Tracker.</div>
+      <div id="widget-body"></div>
     </div>
     <div class="chart-card" style="margin-top:10px">
       <h3>🎨 Theme</h3>
@@ -1219,6 +1231,7 @@ function save() {
   ST._m = Date.now();
   lsSet('sft_v2', JSON.stringify(ST));
   if(typeof schedulePush === 'function') schedulePush();
+  try { if(typeof renderWidgetCard === 'function') renderWidgetCard(); } catch(e) {}
 }
 // Local date string (fixes old bug: toISOString used UTC, so evening logs
 // after ~6pm Mountain time landed on the NEXT day)
@@ -1340,20 +1353,38 @@ function toggleMeal(id, hdr) {
   body.style.display = open ? 'none' : 'block';
   hdr.classList.toggle('collapsed', open);
 }
-function updateBudget() {
-  const nd = nutrData();
+// Same totals the nutrition screen shows for a calendar day.
+// The widget summary uses this for the America/Denver day so the numbers match.
+function nutritionTotalsFor(dateStr) {
+  const day = (ST && dateStr && ST[dateStr] && typeof ST[dateStr] === 'object') ? ST[dateStr] : {};
+  const meals = (day.nutr && day.nutr.meals && typeof day.nutr.meals === 'object') ? day.nutr.meals : {};
   let cal=0,p=0,c=0,f=0;
   MEALS.forEach(m=>{
-    (nd.meals[m.id]||[]).forEach(food=>{
+    (meals[m.id]||[]).forEach(food=>{
+      if(!food) return;
       cal+=food.cal; p+=food.p; c+=food.c; f+=food.f;
     });
   });
-  // cardio burned
   let burned=0;
   DAYS_DATA.forEach(d=>{
-    const dd = ST[today()]?.[d.key];
-    if(dd?.cardio?.calories) burned+=parseFloat(dd.cardio.calories)||0;
+    const dd = day[d.key];
+    if(dd && dd.cardio && dd.cardio.calories) burned+=parseFloat(dd.cardio.calories)||0;
   });
+  const gp = prof();
+  const budget = gp.cal, proteinGoal = gp.protein;
+  return {
+    cal, p, c, f, burned, budget, proteinGoal,
+    caloriesEaten: Math.round(cal),
+    calorieGoal: Math.round(budget),
+    protein: Math.round(p),
+    proteinGoalRounded: Math.round(proteinGoal),
+    caloriesRemaining: Math.round(budget - cal + burned)
+  };
+}
+function updateBudget() {
+  nutrData();
+  const t = nutritionTotalsFor(today());
+  const cal=t.cal, p=t.p, c=t.c, f=t.f, burned=t.burned;
   const gp=prof();
   const budget=gp.cal, remaining=budget-cal+burned;
   document.getElementById('d-eaten').textContent = Math.round(cal);
@@ -2342,16 +2373,24 @@ async function pullCloud() {
   try {
     const snap = await fbDb.collection('users').doc(fbUser.uid).get();
     if(snap.exists) {
-      const cloud = snap.data();
+      const cloud = snap.data() || {};
       let cloudST = {};
       try { cloudST = JSON.parse(cloud.data||'{}'); } catch(e){}
+      try {
+        if (cloudST && typeof cloudST === 'object' && !Array.isArray(cloudST)
+            && !cloudST.widgetKey && typeof cloud.widgetKey === 'string') {
+          cloudST.widgetKey = cloud.widgetKey;
+        }
+      } catch(e) {}
       const localTs = ST._m||0, cloudTs = cloud.ts||0;
       ST = cloudTs >= localTs ? mergeStates(ST, cloudST) : mergeStates(cloudST, ST);
+      try { ensureWidgetKey(); } catch(e) {}
       save();
       refreshAll(); renderThemes();
       const t = document.body.getAttribute('data-theme')||'';
       if((ST.theme||'classic') !== (t||'classic')) document.body.setAttribute('data-theme', ST.theme==='classic'?'':ST.theme);
     } else {
+      try { ensureWidgetKey(); } catch(e) {}
       schedulePush();
     }
   } catch(e) { showToast('⚠️ Cloud sync error — will retry on next change'); }
@@ -2361,10 +2400,24 @@ function schedulePush() {
   if(!fbUser || !fbDb) return;
   clearTimeout(pushTimer);
   pushTimer = setTimeout(()=>{
-    fbDb.collection('users').doc(fbUser.uid)
-      .set({data: JSON.stringify(ST), ts: Date.now(), email: fbUser.email||''})
-      .then(()=>{ ST._sync = Date.now(); lsSet('sft_v2', JSON.stringify(ST)); renderSyncCard(); })
-      .catch(()=>{});
+    try {
+      if (!fbUser || !fbUser.uid || !fbDb) return;
+      let key = null;
+      try { key = ensureWidgetKey(); } catch(e) { key = null; }
+      const payload = {data: JSON.stringify(ST), ts: Date.now(), email: fbUser.email||''};
+      if (key) payload.widgetKey = key;
+      fbDb.collection('users').doc(fbUser.uid)
+        .set(payload)
+        .then(()=>{
+          try {
+            ST._sync = Date.now();
+            lsSet('sft_v2', JSON.stringify(ST));
+            renderSyncCard();
+            writeWidgetSummary(key || (ST && ST.widgetKey));
+          } catch(e) {}
+        })
+        .catch(()=>{});
+    } catch(e) {}
   }, 1200);
 }
 function renderSyncCard() {
@@ -2382,6 +2435,182 @@ function renderSyncCard() {
       </div>`;
   } else {
     el.innerHTML = `<button class="weight-log-btn" style="width:100%" onclick="syncSignIn()">Sign in with Google</button>`;
+  }
+  try { renderWidgetCard(); } catch(e) {}
+}
+// ══════════════════════════════════════
+// IPHONE WIDGET (Scriptable reads widget/{key}; never blocks the app)
+// ══════════════════════════════════════
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+function denverDateStr(now) {
+  try {
+    const date = (now instanceof Date) ? now : new Date();
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Denver',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(date);
+    const grab = type => {
+      for (let i = 0; i < parts.length; i++) if (parts[i].type === type) return parts[i].value;
+      return '';
+    };
+    const y = grab('year'), m = grab('month'), d = grab('day');
+    if (y && m && d) return y + '-' + m + '-' + d;
+  } catch(e) {}
+  try { return todayReal(); } catch(e) { return ''; }
+}
+function denverTodayStr() { return denverDateStr(new Date()); }
+function isWidgetKey(k) {
+  return typeof k === 'string' && /^[A-Za-z0-9_-]{20,128}$/.test(k);
+}
+function randomWidgetKey() {
+  try {
+    const bytes = new Uint8Array(32);
+    const c = (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto : null;
+    if (!c) throw new Error('no crypto');
+    c.getRandomValues(bytes);
+    let hex = '';
+    for (let i = 0; i < bytes.length; i++) hex += ('0' + bytes[i].toString(16)).slice(-2);
+    return hex;
+  } catch(e) {
+    try {
+      let s = '';
+      while (s.length < 64) s += Math.random().toString(16).slice(2);
+      return s.replace(/[^a-f0-9]/g, '').slice(0, 64);
+    } catch(e2) { return ''; }
+  }
+}
+function ensureWidgetKey() {
+  try {
+    if (!ST || typeof ST !== 'object') return null;
+    if (isWidgetKey(ST.widgetKey)) return ST.widgetKey;
+    const key = randomWidgetKey();
+    if (!isWidgetKey(key)) return null;
+    ST.widgetKey = key;
+    try { lsSet('sft_v2', JSON.stringify(ST)); } catch(e) {}
+    return key;
+  } catch(e) { return null; }
+}
+function widgetSummary() {
+  const date = denverTodayStr();
+  const t = nutritionTotalsFor(date);
+  // Same integers the nutrition screen renders. 2600 / 195 are prof() defaults
+  // when the account has no saved goals, and the fallback if a value isn't a number.
+  const storedCal = Number(t.budget);
+  const storedPro = Number(t.proteinGoal);
+  const calorieGoal = isFinite(storedCal) ? Math.round(storedCal) : 2600;
+  const proteinGoal = isFinite(storedPro) ? Math.round(storedPro) : 195;
+  let caloriesRemaining = t.caloriesRemaining;
+  if (!isFinite(storedCal) || !isFinite(caloriesRemaining)) {
+    caloriesRemaining = Math.round(calorieGoal - (Number(t.cal) || 0) + (Number(t.burned) || 0));
+  }
+  const asInt = n => { const r = Math.round(Number(n)); return isFinite(r) ? r : 0; };
+  return {
+    date: date,
+    caloriesEaten: asInt(t.caloriesEaten),
+    calorieGoal: asInt(calorieGoal),
+    protein: asInt(t.protein),
+    proteinGoal: asInt(proteinGoal),
+    caloriesRemaining: asInt(caloriesRemaining)
+  };
+}
+function writeWidgetSummary(key) {
+  try {
+    if (!isWidgetKey(key) || !fbUser || !fbUser.uid || !fbDb) return;
+    const s = widgetSummary();
+    if (!s.date) return;
+    let updatedAt = new Date().toISOString();
+    try {
+      if (firebase && firebase.firestore && firebase.firestore.FieldValue && firebase.firestore.FieldValue.serverTimestamp) {
+        updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      }
+    } catch(e) {}
+    fbDb.collection('widget').doc(key).set({
+      date: s.date,
+      caloriesEaten: s.caloriesEaten,
+      calorieGoal: s.calorieGoal,
+      protein: s.protein,
+      proteinGoal: s.proteinGoal,
+      caloriesRemaining: s.caloriesRemaining,
+      updatedAt: updatedAt,
+      ownerUid: fbUser.uid
+    }).catch(()=>{});
+  } catch(e) {}
+}
+function renderWidgetCard() {
+  try {
+    const el = document.getElementById('widget-body');
+    if (!el) return;
+    let preview = '';
+    try {
+      const s = widgetSummary();
+      const n = v => {
+        const r = Math.round(Number(v));
+        return isFinite(r) ? r.toLocaleString('en-US') : '0';
+      };
+      const line = n(s.caloriesEaten)+' / '+n(s.calorieGoal)+' cal · '+n(s.protein)+' / '+n(s.proteinGoal)+'g protein · '+n(s.caloriesRemaining)+' left';
+      preview = `<div class="widget-today" id="widget-today" data-date="${escapeHtml(s.date)}" data-eaten="${s.caloriesEaten}" data-goal="${s.calorieGoal}" data-protein="${s.protein}" data-pgoal="${s.proteinGoal}" data-left="${s.caloriesRemaining}">${escapeHtml(line)}</div>`;
+    } catch(e) { preview = ''; }
+    const key = isWidgetKey(ST && ST.widgetKey) ? ST.widgetKey : '';
+    if (!key) {
+      const note = fbUser
+        ? 'Creating your widget key…'
+        : 'Sign in with Google in Cloud Sync above. A private widget key is created once and saved to your account.';
+      el.innerHTML = preview + `<div class="widget-note">${note}</div>`;
+      return;
+    }
+    const signedOut = fbUser ? '' : `<div class="widget-note">Sign in with Google in Cloud Sync above so this key stays saved to your account and today’s totals keep updating.</div>`;
+    el.innerHTML = preview + signedOut + `
+      <div class="widget-note">Install Scriptable, add a Small or Medium Scriptable widget, and paste the copied script. It already includes your key.</div>
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Widget key</div>
+      <div class="widget-key" id="widget-key">${escapeHtml(key)}</div>
+      <button class="weight-log-btn" id="widget-copy" style="width:100%" onclick="copyWidgetScript()">Copy Script</button>`;
+  } catch(e) {}
+}
+async function copyWidgetScript() {
+  try {
+    let key = (ST && isWidgetKey(ST.widgetKey)) ? ST.widgetKey : null;
+    if (!key && fbUser) key = ensureWidgetKey();
+    if (!isWidgetKey(key)) { showToast(fbUser ? '⚠️ Could not create a widget key' : '⚠️ Sign in with Google first'); return; }
+    if (fbUser) { try { schedulePush(); } catch(e) {} }
+    let script = '';
+    try {
+      const res = await fetch('widget/fit-widget.js');
+      if (!res.ok) throw new Error('load');
+      script = await res.text();
+    } catch(e) {
+      showToast('⚠️ Couldn’t load the widget script — check your connection');
+      return;
+    }
+    const marker = 'const WIDGET_KEY = "PASTE_YOUR_KEY";';
+    if (script.indexOf(marker) === -1 || script.indexOf('ListWidget') === -1) {
+      showToast('⚠️ Widget script didn’t look right — try again');
+      return;
+    }
+    // Replace only the key assignment. The script also mentions the placeholder
+    // when it checks that a key was filled in.
+    script = script.replace(marker, 'const WIDGET_KEY = "' + key + '";');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(script);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = script;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if (!ok) throw new Error('copy');
+    }
+    try { renderWidgetCard(); } catch(e) {}
+    showToast('📋 Widget script copied');
+  } catch(e) {
+    showToast('⚠️ Could not copy the script');
   }
 }
 // ══════════════════════════════════════
