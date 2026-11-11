@@ -505,7 +505,7 @@ function renderFace(family, model, dark) {
   dc.opaque = true;
   dc.respectScreenScale = true;
   dc.size = new Size(size.w, size.h);
-  const pal = palette(!!dark);
+  const pal = palette(true);
   paintBackground(dc, size.w, size.h, pal);
   if (model && model.kind && model.kind !== "ready") paintMessage(dc, size.w, size.h, pal, model);
   else if (fam === "small") paintSmall(dc, size.w, size.h, pal, model);
@@ -516,7 +516,8 @@ function renderFace(family, model, dark) {
 }
 
 function isDarkMode() {
-  try { return !!Device.isUsingDarkAppearance(); } catch (e) { return true; }
+  // The widget stays on the dark palette in both iPhone appearance modes.
+  return true;
 }
 
 async function makeWidget() {
