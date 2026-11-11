@@ -235,8 +235,9 @@ function mixHex(a, b, t) {
   return out;
 }
 
-function palette(dark) {
-  const hex = dark ? {
+function palette() {
+  // The widget stays on the dark palette in both iPhone appearance modes.
+  const hex = {
     bgTop: "#1b2631",
     bgBottom: "#10151a",
     text: "#f4f7f8",
@@ -251,23 +252,8 @@ function palette(dark) {
     line: "#9aafc2",
     todayStroke: "#f7fbff",
     divider: "#2c3a48"
-  } : {
-    bgTop: "#fbfcfe",
-    bgBottom: "#e6eef7",
-    text: "#172033",
-    muted: "#5c6d7e",
-    track: "#d3ddea",
-    cal: "#1c9a5e",
-    pro: "#3a6fe0",
-    accent: "#5b6ed4",
-    warn: "#d4843c",
-    ok: "#1c9a5e",
-    low: "#c4842a",
-    line: "#7f96ad",
-    todayStroke: "#172033",
-    divider: "#d3ddea"
   };
-  const out = { hex: hex, dark: !!dark };
+  const out = { hex: hex, dark: true };
   const names = Object.keys(hex);
   for (let i = 0; i < names.length; i++) out[names[i]] = new Color(hex[names[i]]);
   return out;
@@ -505,7 +491,7 @@ function renderFace(family, model, dark) {
   dc.opaque = true;
   dc.respectScreenScale = true;
   dc.size = new Size(size.w, size.h);
-  const pal = palette(true);
+  const pal = palette();
   paintBackground(dc, size.w, size.h, pal);
   if (model && model.kind && model.kind !== "ready") paintMessage(dc, size.w, size.h, pal, model);
   else if (fam === "small") paintSmall(dc, size.w, size.h, pal, model);
@@ -516,7 +502,6 @@ function renderFace(family, model, dark) {
 }
 
 function isDarkMode() {
-  // The widget stays on the dark palette in both iPhone appearance modes.
   return true;
 }
 
@@ -536,13 +521,12 @@ async function makeWidget() {
   let image = null;
   try { image = renderFace(family, model, isDarkMode()); } catch (e) { image = null; }
   try {
-    const pal = palette(isDarkMode());
-    widget.backgroundColor = pal.bgBottom;
+    widget.backgroundColor = palette().bgBottom;
   } catch (e) {}
   if (!image) {
     const line = widget.addText((model && model.note) || "Open Fit Tracker");
     line.font = Font.mediumSystemFont(14);
-    try { line.textColor = palette(isDarkMode()).text; } catch (e2) {}
+    try { line.textColor = palette().text; } catch (e2) {}
     return widget;
   }
   try { widget.setPadding(0, 0, 0, 0); } catch (e) {}

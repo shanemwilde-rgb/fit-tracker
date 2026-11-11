@@ -2615,7 +2615,7 @@ async function copyWidgetScript() {
     if (fbUser) { try { schedulePush(); } catch(e) {} }
     let script = '';
     try {
-      const res = await fetch('widget/fit-widget.js?v=8', {cache:'no-store'});
+      const res = await fetch('widget/fit-widget.js?v=9', {cache:'no-store'});
       if (!res.ok) throw new Error('load');
       script = await res.text();
     } catch(e) {
