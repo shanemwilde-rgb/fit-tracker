@@ -592,10 +592,12 @@ function renderFace(family, model, dark, opts) {
   dc.respectScreenScale = true;
   dc.size = new Size(size.w, size.h);
   const pal = palette(!!dark);
-  if (showWallpaper) paintSampleWallpaper(dc, size.w, size.h);
+  if (opts.wallHex) {
+    dc.setFillColor(new Color(opts.wallHex));
+    dc.fillRect(new Rect(0, 0, size.w, size.h));
+  } else if (showWallpaper) paintSampleWallpaper(dc, size.w, size.h);
   else if (!transparent) paintBackground(dc, size.w, size.h, pal);
-  // A full-widget tint reads as a pale card and hides the wallpaper.
-  // Only the old preview path asks for that scrim. The live widget never does.
+  // The live widget never paints a veil. opts.scrim exists only to reproduce the old pale panel.
   if (opts.scrim) paintScrim(dc, size.w, size.h, pal);
   if (model && model.kind && model.kind !== "ready") paintMessage(dc, size.w, size.h, pal, model);
   else if (fam === "small") paintSmall(dc, size.w, size.h, pal, model);
@@ -738,17 +740,53 @@ function screenScale() {
 }
 
 function cropWallpaper(img, crop, deviceScale) {
-  const place = cropPlacement(img.size.width, img.size.height, crop, deviceScale || screenScale());
-  if (!place || place.kind === "unknown" || place.kind === "doubled") return null;
-  const draw = new DrawContext();
-  // Point size × screen scale = crop pixels, so the widget does not scale the photo down.
-  draw.opaque = true;
-  draw.respectScreenScale = true;
-  draw.size = new Size(place.contextW, place.contextH);
-  const rect = new Rect(place.destX, place.destY, place.destW, place.destH);
-  if (draw.drawImageInRect) draw.drawImageInRect(img, rect);
-  else draw.drawImageAtPoint(img, new Point(place.destX, place.destY));
-  return draw.getImage();
+  const scale = deviceScale || screenScale();
+  const shot = classifyScreenshot(img.size.width, img.size.height);
+  if (!shot || shot.kind === "unknown" || shot.kind === "doubled" || shot.kind === "sideways") return null;
+  // One 1:1 pixel copy. respectScreenScale stays false here: turning it on while
+  // drawing the full screenshot paints the photo twice (points and pixels) and
+  // mixes the Edit button into the brown, which looks pale, blurry, and doubled.
+  const pixels = new DrawContext();
+  pixels.respectScreenScale = false;
+  pixels.opaque = true;
+  pixels.size = new Size(crop.w, crop.h);
+  if (shot.kind === "pixels") {
+    pixels.drawImageAtPoint(img, new Point(-crop.x, -crop.y));
+  } else {
+    pixels.drawImageInRect(img, new Rect(-crop.x, -crop.y, img.size.width * scale, img.size.height * scale));
+  }
+  const cropped = pixels.getImage();
+  // Retag the already-cropped pixels with the screen scale. The source is only
+  // the widget-sized crop, so this cannot pull in the dock or the Edit button.
+  const sharp = new DrawContext();
+  sharp.respectScreenScale = true;
+  sharp.opaque = true;
+  sharp.size = new Size(crop.w / scale, crop.h / scale);
+  sharp.drawImageInRect(cropped, new Rect(0, 0, crop.w / scale, crop.h / scale));
+  return sharp.getImage();
+}
+
+function solidFromScreenshot(img, crop, deviceScale) {
+  const scale = deviceScale || screenScale();
+  const cx = Math.floor(crop.x + crop.w / 2);
+  const cy = Math.floor(crop.y + crop.h / 2);
+  const sample = new DrawContext();
+  sample.respectScreenScale = false;
+  sample.opaque = true;
+  sample.size = new Size(1, 1);
+  const shot = classifyScreenshot(img.size.width, img.size.height);
+  if (shot && shot.kind === "points") {
+    sample.drawImageInRect(img, new Rect(-cx, -cy, img.size.width * scale, img.size.height * scale));
+  } else {
+    sample.drawImageAtPoint(img, new Point(-cx, -cy));
+  }
+  const pixel = sample.getImage();
+  const flat = new DrawContext();
+  flat.respectScreenScale = true;
+  flat.opaque = true;
+  flat.size = new Size(crop.w / scale, crop.h / scale);
+  flat.drawImageInRect(pixel, new Rect(0, 0, crop.w / scale, crop.h / scale));
+  return flat.getImage();
 }
 
 function screenshotHelp(shot) {
@@ -768,49 +806,64 @@ function bgName(family) {
   return "fit-tracker-bg-" + family + ".png";
 }
 
-function openStorage() {
+function openStorages() {
+  const local = FileManager.local();
+  let cloud = null;
   try {
-    const cloud = FileManager.iCloud();
-    const dir = cloud.documentsDirectory();
-    const probe = cloud.joinPath(dir, ".fit-tracker-probe");
-    cloud.writeString(probe, "1");
-    try { cloud.remove(probe); } catch (e) {}
-    return { fm: cloud, icloud: true };
-  } catch (e) {
-    return { fm: FileManager.local(), icloud: false };
-  }
+    const fm = FileManager.iCloud();
+    const probe = fm.joinPath(fm.documentsDirectory(), ".fit-tracker-probe");
+    fm.writeString(probe, "1");
+    try { fm.remove(probe); } catch (e) {}
+    cloud = fm;
+  } catch (e) {}
+  return { local: local, cloud: cloud };
 }
 
-function bgPath(store, family) {
-  return store.fm.joinPath(store.fm.documentsDirectory(), bgName(family));
+function bgPath(fm, family) {
+  return fm.joinPath(fm.documentsDirectory(), bgName(family));
+}
+
+function saveBackground(family, image) {
+  const stores = openStorages();
+  stores.local.writeImage(bgPath(stores.local, family), image);
+  if (stores.cloud) {
+    try { stores.cloud.writeImage(bgPath(stores.cloud, family), image); } catch (e) {}
+  }
+  return stores.cloud ? "iCloud and this iPhone" : "this iPhone";
 }
 
 async function loadBackground(family) {
   try {
-    const store = openStorage();
-    const path = bgPath(store, family);
-    if (!store.fm.fileExists(path)) return null;
-    if (store.icloud && store.fm.downloadFileFromiCloud) {
-      try { await store.fm.downloadFileFromiCloud(path); } catch (e) {}
-    }
-    return store.fm.readImage(path);
+    const stores = openStorages();
+    const localPath = bgPath(stores.local, family);
+    if (stores.local.fileExists(localPath)) return stores.local.readImage(localPath);
+    if (!stores.cloud) return null;
+    const cloudPath = bgPath(stores.cloud, family);
+    if (!stores.cloud.fileExists(cloudPath)) return null;
+    try { await stores.cloud.downloadFileFromiCloud(cloudPath); } catch (e) {}
+    return stores.cloud.readImage(cloudPath);
   } catch (e) { return null; }
 }
 
 function backgroundExists(family) {
   try {
-    const store = openStorage();
-    return store.fm.fileExists(bgPath(store, family));
+    const stores = openStorages();
+    if (stores.local.fileExists(bgPath(stores.local, family))) return true;
+    return !!(stores.cloud && stores.cloud.fileExists(bgPath(stores.cloud, family)));
   } catch (e) { return false; }
 }
 
 function clearBackgrounds() {
   const families = ["small", "medium", "large"];
   try {
-    const store = openStorage();
-    for (let i = 0; i < families.length; i++) {
-      const path = bgPath(store, families[i]);
-      if (store.fm.fileExists(path)) store.fm.remove(path);
+    const stores = openStorages();
+    const managers = [stores.local];
+    if (stores.cloud) managers.push(stores.cloud);
+    for (let m = 0; m < managers.length; m++) {
+      for (let i = 0; i < families.length; i++) {
+        const path = bgPath(managers[m], families[i]);
+        if (managers[m].fileExists(path)) managers[m].remove(path);
+      }
     }
   } catch (e) {}
 }
@@ -826,10 +879,10 @@ async function choose(title, message, options) {
   return options[index].value || options[index];
 }
 
-async function setupBackground() {
+async function setupBackground(solidOnly) {
   const ready = await choose(
     "Empty page, jiggle mode",
-    "Long-press the home screen until the icons jiggle. Swipe to the last page. It must be empty, with no widgets. Take a screenshot, then come back. A page that already shows this widget will look doubled.",
+    "Long-press the home screen until the icons jiggle. Swipe to the last page. It must be empty, with no widgets and no icons covering the widget area. Take a screenshot, then come back. If this widget is already in the photo, the result looks doubled.",
     ["Choose screenshot"]
   );
   if (!ready) return;
@@ -886,17 +939,24 @@ async function setupBackground() {
   const position = await choose(positionTitle, positionHelp, positions);
   if (!position) return;
   const crop = cropFor(spec, family, position);
-  const image = cropWallpaper(img, crop, found.scale);
+  let useSolid = !!solidOnly;
+  if (!useSolid) {
+    const mode = await choose("How should the background be filled?", "A solid wallpaper can use a color sampled from the middle of that spot. That cannot blur or double.", [
+      { label: "Cropped photo", value: "photo" },
+      { label: "Solid color from screenshot", value: "solid" }
+    ]);
+    if (!mode) return;
+    useSolid = mode === "solid";
+  }
+  const image = useSolid ? solidFromScreenshot(img, crop, found.scale) : cropWallpaper(img, crop, found.scale);
   if (!image) {
     await choose("Use a different screenshot", screenshotHelp(shot), ["OK"]);
     return;
   }
-  const store = openStorage();
-  store.fm.writeImage(bgPath(store, family), image);
-  const where = store.icloud ? "iCloud" : "this iPhone";
+  const where = saveBackground(family, image);
   await choose(
     "Background saved",
-    "Saved in " + where + ". Put the " + family + " Scriptable widget in the " + position.toLowerCase() + " of that same empty page. Run this script again to set another size or to redo it.",
+    (useSolid ? "Saved a solid color sampled from the middle of the " + position.toLowerCase() + " " + family + " spot. " : "Saved the cropped photo. ") + "Stored on " + where + ". Put the widget in that spot on the same empty page. If it still looks wrong, run this again and choose Solid color from screenshot.",
     ["OK"]
   );
 }
@@ -947,10 +1007,11 @@ async function runInApp() {
     hasBg
       ? "Set transparent background, clear it, or preview a size."
       : "iOS widgets can't be truly clear. Screenshot an empty home screen page, then this script crops it behind the widget.",
-    ["Set transparent background", "Clear background", "Preview small", "Preview medium", "Preview large"]
+    ["Set transparent background", "Solid color from screenshot", "Clear background", "Preview small", "Preview medium", "Preview large"]
   );
   if (!choice) return;
-  if (choice === "Set transparent background") await setupBackground();
+  if (choice === "Set transparent background") await setupBackground(false);
+  else if (choice === "Solid color from screenshot") await setupBackground(true);
   else if (choice === "Clear background") {
     clearBackgrounds();
     await choose("Background cleared", "The widget will use its solid background until you set a screenshot again.", ["OK"]);
