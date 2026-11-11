@@ -2463,6 +2463,38 @@ function denverDateStr(now) {
   try { return todayReal(); } catch(e) { return ''; }
 }
 function denverTodayStr() { return denverDateStr(new Date()); }
+function shiftDenverDate(ymd, delta) {
+  try {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || '');
+    if (!m) return '';
+    const dt = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    dt.setUTCDate(dt.getUTCDate() + delta);
+    const y = dt.getUTCFullYear();
+    const mo = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const da = String(dt.getUTCDate()).padStart(2, '0');
+    return y + '-' + mo + '-' + da;
+  } catch(e) { return ''; }
+}
+function widgetAsInt(n) {
+  const r = Math.round(Number(n));
+  return isFinite(r) ? r : 0;
+}
+function widgetLast7() {
+  const end = denverTodayStr();
+  if (!end) return [];
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = shiftDenverDate(end, -i);
+    let calories = 0, protein = 0;
+    try {
+      const t = nutritionTotalsFor(date);
+      calories = widgetAsInt(t.caloriesEaten);
+      protein = widgetAsInt(t.protein);
+    } catch(e) {}
+    days.push({ date: date, calories: calories, protein: protein });
+  }
+  return days;
+}
 function isWidgetKey(k) {
   return typeof k === 'string' && /^[A-Za-z0-9_-]{20,128}$/.test(k);
 }
@@ -2528,7 +2560,7 @@ function writeWidgetSummary(key) {
         updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       }
     } catch(e) {}
-    fbDb.collection('widget').doc(key).set({
+    const doc = {
       date: s.date,
       caloriesEaten: s.caloriesEaten,
       calorieGoal: s.calorieGoal,
@@ -2537,7 +2569,12 @@ function writeWidgetSummary(key) {
       caloriesRemaining: s.caloriesRemaining,
       updatedAt: updatedAt,
       ownerUid: fbUser.uid
-    }).catch(()=>{});
+    };
+    try {
+      const last7 = widgetLast7();
+      if (last7 && last7.length) doc.last7 = last7;
+    } catch(e) {}
+    fbDb.collection('widget').doc(key).set(doc).catch(()=>{});
   } catch(e) {}
 }
 function renderWidgetCard() {
@@ -2564,7 +2601,7 @@ function renderWidgetCard() {
     }
     const signedOut = fbUser ? '' : `<div class="widget-note">Sign in with Google in Cloud Sync above so this key stays saved to your account and today’s totals keep updating.</div>`;
     el.innerHTML = preview + signedOut + `
-      <div class="widget-note">Install Scriptable, add a Small or Medium Scriptable widget, and paste the copied script. It already includes your key.</div>
+      <div class="widget-note">Install Scriptable, add a Small, Medium, or Large widget, and paste this script over any older one. It draws calorie and protein rings, and a 7-day chart on medium and large. Your key is already filled in.</div>
       <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Widget key</div>
       <div class="widget-key" id="widget-key">${escapeHtml(key)}</div>
       <button class="weight-log-btn" id="widget-copy" style="width:100%" onclick="copyWidgetScript()">Copy Script</button>`;
@@ -2578,7 +2615,7 @@ async function copyWidgetScript() {
     if (fbUser) { try { schedulePush(); } catch(e) {} }
     let script = '';
     try {
-      const res = await fetch('widget/fit-widget.js');
+      const res = await fetch('widget/fit-widget.js?v=3', {cache:'no-store'});
       if (!res.ok) throw new Error('load');
       script = await res.text();
     } catch(e) {
@@ -2586,7 +2623,7 @@ async function copyWidgetScript() {
       return;
     }
     const marker = 'const WIDGET_KEY = "PASTE_YOUR_KEY";';
-    if (script.indexOf(marker) === -1 || script.indexOf('ListWidget') === -1) {
+    if (script.indexOf(marker) === -1 || script.indexOf('DrawContext') === -1 || script.indexOf('last7') === -1) {
       showToast('⚠️ Widget script didn’t look right — try again');
       return;
     }
