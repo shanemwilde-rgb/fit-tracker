@@ -5,8 +5,42 @@ rules_version = '2';
 // Existing app traffic is unchanged:
 //   users/{uid}  get + set {data, ts, email, widgetKey} by that signed-in user only.
 // The iPhone widget reads one hard-to-guess document and cannot list the collection.
+//
+// Apple Health shortcuts write one document per workout:
+//   healthIngest/{secretKey}/workouts/{workoutId}
+// The shortcut is not signed in. The secret key is the permission.
+// Only the signed-in owner can read or list those workouts. Nobody else can.
+// Repeating a shortcut run overwrites the same workout id, so it cannot double count.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function healthKeyOk(key) {
+      return key.matches('^[A-Za-z0-9_-]{20,128}$');
+    }
+    function workoutIdOk(id) {
+      return id.matches('^[A-Za-z0-9_-]{8,128}$');
+    }
+    function healthOwner(key) {
+      return get(/databases/$(database)/documents/healthIngest/$(key)).data.ownerUid == request.auth.uid;
+    }
+    function workoutWriteOk() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['type', 'activeCalories', 'durationMin', 'start'])
+        && data.type is string
+        && data.type.size() > 0
+        && data.type.size() <= 60
+        && data.activeCalories is number
+        && data.activeCalories >= 0
+        && data.activeCalories <= 5000
+        && data.durationMin is number
+        && data.durationMin >= 0
+        && data.durationMin <= 1440
+        && data.start is string
+        && data.start.size() >= 16
+        && data.start.size() <= 40
+        && data.start.matches('^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}')
+        && request.resource.size() < 2048;
+    }
+
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
@@ -25,6 +59,25 @@ service cloud.firestore {
 
       allow delete: if request.auth != null
         && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /healthIngest/{key} {
+      allow get: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      allow list: if false;
+      allow create: if request.auth != null
+        && healthKeyOk(key)
+        && request.resource.data.keys().hasOnly(['ownerUid'])
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if false;
+
+      match /workouts/{workoutId} {
+        allow get, list: if request.auth != null && healthOwner(key);
+        allow create, update: if healthKeyOk(key)
+          && workoutIdOk(workoutId)
+          && exists(/databases/$(database)/documents/healthIngest/$(key))
+          && workoutWriteOk();
+        allow delete: if false;
+      }
     }
   }
 }
