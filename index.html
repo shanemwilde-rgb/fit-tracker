@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a3a5c">
@@ -71,7 +71,9 @@ html{font-size:16px;}
 body{
   background:var(--bg);color:var(--ink);
   font-family:'Barlow',sans-serif;
-  min-height:100vh;padding-bottom:72px;
+  min-height:100vh;
+  /* 64px clears the tab labels; the rest matches the bar's own bottom padding. */
+  padding-bottom: calc(64px + max(8px, env(safe-area-inset-bottom, 0px)));
   max-width:480px;margin:0 auto;
   position:relative;
 }
@@ -86,9 +88,11 @@ body{
   background:var(--hdr);
   display:flex;border-top:2px solid rgba(255,255,255,.08);
   z-index:200;
+  /* 8px keeps today's gap when there is no home indicator; the inset grows the bar on iPhone. */
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
 }
 .bnav-btn{
-  flex:1;padding:10px 0 8px;background:none;border:none;cursor:pointer;
+  flex:1;padding:10px 0 0;background:none;border:none;cursor:pointer;
   color:rgba(255,255,255,.4);
   font-family:'Barlow Condensed',sans-serif;
   font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;
@@ -141,7 +145,7 @@ body{
 .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .toast{
-  position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(12px);
+  position:fixed;bottom:calc(74px + max(8px, env(safe-area-inset-bottom, 0px)));left:50%;transform:translateX(-50%) translateY(12px);
   background:rgba(10,10,10,.92);color:#fff;padding:9px 20px;
   border-radius:100px;font-size:13px;font-weight:600;
   opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap;z-index:999;
@@ -262,7 +266,7 @@ body{
 .modal-sheet{
   background:var(--bg);border-radius:20px 20px 0 0;
   width:100%;max-width:480px;margin:0 auto;
-  padding:0 0 30px;
+  padding:0 0 calc(30px + env(safe-area-inset-bottom, 0px));
   max-height:92vh;overflow-y:auto;
   animation:slideUp .28s ease;
 }
