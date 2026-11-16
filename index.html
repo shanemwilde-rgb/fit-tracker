@@ -3111,7 +3111,7 @@ function markHomeScreen() {
       swReloaded = true;
       location.reload();
     });
-    navigator.serviceWorker.register('sw.js').then(reg => {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
       try { reg.update(); } catch(e) {}
     }).catch(()=>{});
   }
