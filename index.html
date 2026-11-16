@@ -179,6 +179,12 @@ body{
 .bs-val.green{color:var(--green);}
 .bs-val.orange{color:var(--warn);}
 .bs-val.red{color:var(--red);}
+.burn-note{font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 2px;}
+.burn-note:empty{display:none;margin:0;}
+.burn-note button{
+  margin:6px 6px 0 0;padding:4px 8px;border-radius:8px;border:1px solid var(--border);
+  background:var(--chip);color:var(--ink);font-size:11px;font-weight:700;cursor:pointer;
+}
 /* Macro bar row */
 .macro-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:0;}
 .macro-chip{
@@ -719,6 +725,7 @@ body{
           </div>
         </div>
       </div>
+      <div class="burn-note" id="burn-note"></div>
       <div class="macro-strip">
         <div class="macro-chip">
           <div class="mc-val p" id="m-protein">0g</div>
@@ -855,6 +862,11 @@ body{
       <h3>📱 iPhone Widget</h3>
       <div class="chart-sub">Home-screen calories and protein in the free Scriptable app. Tap the widget to open Fit Tracker.</div>
       <div id="widget-body"></div>
+    </div>
+    <div class="chart-card" style="margin-top:10px">
+      <h3>❤️ Apple Health</h3>
+      <div class="chart-sub">Workouts from the iPhone Health app add their active calories to Burned. The shortcut has no login — this secret key is how it is allowed to write.</div>
+      <div id="health-body"></div>
     </div>
     <div class="chart-card" style="margin-top:10px">
       <h3>🎨 Theme</h3>
@@ -1358,11 +1370,7 @@ function nutritionTotalsFor(dateStr) {
       cal+=food.cal; p+=food.p; c+=food.c; f+=food.f;
     });
   });
-  let burned=0;
-  DAYS_DATA.forEach(d=>{
-    const dd = day[d.key];
-    if(dd && dd.cardio && dd.cardio.calories) burned+=parseFloat(dd.cardio.calories)||0;
-  });
+  const burned = burnPartsFor(dateStr).burned;
   const gp = prof();
   const budget = gp.cal, proteinGoal = gp.protein;
   return {
@@ -1396,6 +1404,7 @@ function updateBudget() {
   document.getElementById('mb-protein').style.width = Math.min(p/gp.protein*100,100)+'%';
   document.getElementById('mb-carbs').style.width = Math.min(c/gp.carbs*100,100)+'%';
   document.getElementById('mb-fat').style.width = Math.min(f/gp.fat*100,100)+'%';
+  renderBurnNote(today());
 }
 function delFood(mealId, foodId) {
   const nd = nutrData();
@@ -2502,7 +2511,11 @@ function syncSignIn() {
     .then(()=>showToast('☁️ Cloud sync is on'))
     .catch(e=>{ if(!e || e.code!=='auth/popup-closed-by-user') showToast('⚠️ Sign-in failed — try again'); });
 }
-function syncSignOut() { if(fbReady) { firebase.auth().signOut(); showToast('Signed out — data stays on this device'); } }
+function syncSignOut() {
+  healthCache = {};
+  if(fbReady) { firebase.auth().signOut(); showToast('Signed out — data stays on this device'); }
+  try { updateBudget(); } catch(e) {}
+}
 function mergeStates(older, newer) {
   const out = {...older};
   Object.keys(newer).forEach(k=>{
@@ -2532,16 +2545,19 @@ async function pullCloud() {
       const localTs = ST._m||0, cloudTs = cloud.ts||0;
       ST = cloudTs >= localTs ? mergeStates(ST, cloudST) : mergeStates(cloudST, ST);
       try { ensureWidgetKey(); } catch(e) {}
+      try { ensureHealthKey(); } catch(e) {}
       save();
       refreshAll(); renderThemes();
       const t = document.body.getAttribute('data-theme')||'';
       if((ST.theme||'classic') !== (t||'classic')) document.body.setAttribute('data-theme', ST.theme==='classic'?'':ST.theme);
     } else {
       try { ensureWidgetKey(); } catch(e) {}
+      try { ensureHealthKey(); } catch(e) {}
       schedulePush();
     }
   } catch(e) { showToast('⚠️ Cloud sync error — will retry on next change'); }
   renderSyncCard();
+  try { refreshHealthWorkouts(); } catch(e) {}
 }
 function schedulePush() {
   if(!fbUser || !fbDb) return;
@@ -2584,6 +2600,7 @@ function renderSyncCard() {
     el.innerHTML = `<button class="weight-log-btn" style="width:100%" onclick="syncSignIn()">Sign in with Google</button>`;
   }
   try { renderWidgetCard(); } catch(e) {}
+  try { renderHealthCard(); } catch(e) {}
 }
 // ══════════════════════════════════════
 // IPHONE WIDGET (Scriptable reads widget/{key}; never blocks the app)
@@ -2672,6 +2689,165 @@ function ensureWidgetKey() {
     try { lsSet('sft_v2', JSON.stringify(ST)); } catch(e) {}
     return key;
   } catch(e) { return null; }
+}
+// Apple Health workouts live in healthIngest/{healthKey}/workouts/{workoutId}.
+// healthCache is filled only after the signed-in app reads them. It is not the widget doc.
+let healthCache = {};
+let healthRefresh = 0;
+function healthDateOf(start) {
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(start || ''));
+  return m ? m[1] : '';
+}
+function burnHideFor(dateStr) {
+  const day = (ST && dateStr && ST[dateStr] && typeof ST[dateStr] === 'object') ? ST[dateStr] : {};
+  const h = (day && day.burnHide) || {};
+  return { health: !!h.health, hand: !!h.hand };
+}
+function handBurnedFor(dateStr) {
+  const day = (ST && dateStr && ST[dateStr] && typeof ST[dateStr] === 'object') ? ST[dateStr] : {};
+  let burned = 0;
+  DAYS_DATA.forEach(d => {
+    const dd = day[d.key];
+    if (dd && dd.cardio && dd.cardio.calories) burned += parseFloat(dd.cardio.calories) || 0;
+  });
+  return isFinite(burned) ? burned : 0;
+}
+function healthItemsFor(dateStr) {
+  const list = (healthCache && healthCache[dateStr]) || [];
+  return list.filter(w => w && isFinite(Number(w.cal)) && Number(w.cal) >= 0);
+}
+function burnPartsFor(dateStr) {
+  const hide = burnHideFor(dateStr);
+  const hand = handBurnedFor(dateStr);
+  const items = healthItemsFor(dateStr);
+  let healthCal = 0;
+  items.forEach(w => { healthCal += Number(w.cal) || 0; });
+  const burned = (hide.hand ? 0 : hand) + (hide.health ? 0 : healthCal);
+  return { burned: burned, hand: hand, healthCal: healthCal, items: items, hide: hide };
+}
+function renderBurnNote(dateStr) {
+  const el = document.getElementById('burn-note');
+  if (!el) return;
+  const parts = burnPartsFor(dateStr);
+  if (!parts.hand && !parts.items.length) { el.innerHTML = ''; return; }
+  let html = '';
+  if (parts.items.length) {
+    const bits = parts.items.slice(0, 3).map(w => {
+      const name = escapeHtml(w.type || 'Workout');
+      return w.min ? name + ' · ' + w.min + ' min' : name;
+    }).join(', ');
+    html += '<div>' + (parts.hide.health ? 'Not counted: ' : '') + Math.round(parts.healthCal) + ' from Apple Health'
+      + (bits ? ' · ' + bits : '') + '</div>';
+  }
+  if (parts.hand) {
+    html += '<div>' + (parts.hide.hand ? 'Not counted: ' : '') + Math.round(parts.hand) + ' logged by hand</div>';
+  }
+  if (parts.hand && parts.items.length) {
+    html += '<div>Both are listed so the same session is not counted twice by accident. Hide one if you logged it both ways.</div>';
+    html += '<button type="button" onclick="toggleBurnSource(\'health\')">' + (parts.hide.health ? 'Count Apple Health' : 'Hide Apple Health') + '</button>';
+    html += '<button type="button" onclick="toggleBurnSource(\'hand\')">' + (parts.hide.hand ? 'Count hand entry' : 'Hide hand entry') + '</button>';
+  }
+  el.innerHTML = html;
+}
+function toggleBurnSource(which) {
+  if (which !== 'health' && which !== 'hand') return;
+  const ds = today();
+  if (!ST[ds] || typeof ST[ds] !== 'object') ST[ds] = {};
+  if (!ST[ds].burnHide) ST[ds].burnHide = {};
+  ST[ds].burnHide[which] = !ST[ds].burnHide[which];
+  save();
+  updateBudget();
+}
+function ensureHealthKey() {
+  try {
+    if (!ST || typeof ST !== 'object') return null;
+    if (isWidgetKey(ST.healthKey)) return ST.healthKey;
+    const key = randomWidgetKey();
+    if (!isWidgetKey(key)) return null;
+    ST.healthKey = key;
+    try { lsSet('sft_v2', JSON.stringify(ST)); } catch(e) {}
+    return key;
+  } catch(e) { return null; }
+}
+async function ensureHealthParent(key) {
+  if (!fbUser || !fbUser.uid || !fbDb || !isWidgetKey(key)) return;
+  try {
+    await fbDb.collection('healthIngest').doc(key).set({ ownerUid: fbUser.uid });
+  } catch(e) {}
+}
+async function refreshHealthWorkouts() {
+  const seq = ++healthRefresh;
+  const key = (ST && isWidgetKey(ST.healthKey)) ? ST.healthKey : null;
+  if (!key || !fbUser || !fbDb) { try { updateBudget(); } catch(e) {} return; }
+  try { await ensureHealthParent(key); } catch(e) {}
+  try {
+    const snap = await fbDb.collection('healthIngest').doc(key).collection('workouts')
+      .orderBy('start', 'desc').limit(80).get();
+    if (seq !== healthRefresh) return;
+    const byDate = {};
+    snap.forEach(doc => {
+      const d = doc.data() || {};
+      const date = healthDateOf(d.start);
+      const cal = Number(d.activeCalories);
+      if (!date || !isFinite(cal) || cal < 0 || cal > 5000) return;
+      const type = String(d.type || 'Workout').replace(/[<>]/g, '').slice(0, 60);
+      let min = Math.round(Number(d.durationMin) || 0);
+      if (!isFinite(min) || min < 0) min = 0;
+      if (!byDate[date]) byDate[date] = [];
+      byDate[date].push({ id: doc.id, type: type || 'Workout', cal: cal, min: min });
+    });
+    healthCache = byDate;
+  } catch(e) {}
+  if (seq !== healthRefresh) return;
+  try { updateBudget(); } catch(e) {}
+  try { writeWidgetSummary(ST.widgetKey); } catch(e) {}
+  try { renderWidgetCard(); } catch(e) {}
+}
+function renderHealthCard() {
+  const el = document.getElementById('health-body');
+  if (!el) return;
+  if (!fbUser) {
+    el.innerHTML = '<div class="widget-note">Sign in with Google in Cloud Sync above. Then copy the Health key. The app can only read workouts while you are signed in.</div>';
+    return;
+  }
+  const key = ensureHealthKey();
+  if (!isWidgetKey(key)) {
+    el.innerHTML = '<div class="widget-note">Could not create a Health key.</div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="widget-note">Paste this key into the shortcut URL where it says PASTE_YOUR_KEY. Don’t share it. Open the app after a workout so Burned and the widget update.</div>
+    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Health shortcut key</div>
+    <div class="widget-key" id="health-key">${escapeHtml(key)}</div>
+    <button class="weight-log-btn" id="health-copy" style="width:100%" onclick="copyHealthKey()">Copy Health Shortcut key</button>
+    <button class="weight-log-btn" style="width:100%;margin-top:8px;background:var(--chip);color:var(--ink)" onclick="refreshHealthWorkouts()">Refresh workouts</button>`;
+}
+async function copyHealthKey() {
+  try {
+    if (!fbUser) { showToast('⚠️ Sign in with Google first'); return; }
+    let key = (ST && isWidgetKey(ST.healthKey)) ? ST.healthKey : ensureHealthKey();
+    if (!isWidgetKey(key)) { showToast('⚠️ Could not create a Health key'); return; }
+    try { schedulePush(); } catch(e) {}
+    try { await ensureHealthParent(key); } catch(e) {}
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(key);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = key;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if (!ok) throw new Error('copy');
+    }
+    showToast('📋 Health key copied');
+    try { renderHealthCard(); } catch(e) {}
+  } catch(e) {
+    showToast('⚠️ Could not copy the Health key');
+  }
 }
 function widgetSummary() {
   const date = denverTodayStr();
@@ -2891,6 +3067,11 @@ function showToast(msg){
   renderThemes();
   applyProfileUI();
   if(!ST.profile) setTimeout(openProfile, 500); // first-run: ask for your own goals
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      try { refreshHealthWorkouts(); } catch(e) {}
+    }
+  });
   initSync();
   if('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(()=>{});
