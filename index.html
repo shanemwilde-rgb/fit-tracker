@@ -512,6 +512,75 @@ html.standalone .bnav{min-height:72px;}
   display:flex;align-items:center;justify-content:center;
   border:2px solid var(--card);
 }
+/* Nutrition week strip */
+.nutr-week{margin-top:14px;}
+.week-toggle{
+  display:flex;justify-content:center;gap:2px;
+  margin:0 8px 12px;padding:3px;
+  background:var(--bg);border-radius:999px;
+}
+.week-toggle button{
+  flex:1;max-width:110px;border:none;background:transparent;cursor:pointer;
+  border-radius:999px;padding:5px 0;
+  font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;
+  letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+}
+.week-toggle button.on{background:var(--navy);color:#fff;}
+.nring-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.nring{
+  background:none;border:none;cursor:pointer;padding:2px 0 4px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink);
+}
+.nring.future{opacity:.38;}
+.nring-dial{position:relative;width:40px;height:40px;}
+.nring-dial svg{width:40px;height:40px;transform:rotate(-90deg);}
+.nring-track{fill:none;stroke:var(--border);stroke-width:3;}
+.nring.empty .nring-track{stroke:var(--chip);opacity:.7;}
+.nring-arc{fill:none;stroke-width:3;stroke-linecap:round;}
+.nring-arc.green{stroke:var(--green);}
+.nring-arc.over{stroke:#e6c07b;}
+.nring-num{
+  position:absolute;inset:7px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--ink);
+}
+.nring.today .nring-num{background:var(--green);color:#fff;}
+.nring.selected:not(.today) .nring-num{background:var(--navy);color:#fff;}
+.nring-check{
+  position:absolute;bottom:-2px;right:-2px;z-index:1;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--green);color:#fff;font-size:8px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--card);
+}
+.nbars{padding:0 8px 2px;}
+.nbars-plot{
+  position:relative;height:92px;
+  display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;
+}
+.nbars-goal{
+  position:absolute;left:0;right:0;border-top:1.5px dashed var(--muted);
+  pointer-events:none;
+}
+.nbar{
+  background:none;border:none;cursor:pointer;padding:0;
+  height:100%;display:flex;align-items:flex-end;justify-content:center;
+}
+.nbar-stack{height:100%;width:70%;max-width:22px;display:flex;flex-direction:column-reverse;border-radius:5px 5px 2px 2px;overflow:hidden;}
+.nbar-under{background:var(--green);width:100%;}
+.nbar-over{background:#e6c07b;width:100%;}
+.nbar.selected{box-shadow:inset 0 -3px 0 var(--gold);}
+.nbar.future{opacity:.35;}
+.nbars-labels{display:grid;grid-template-columns:repeat(7,1fr);margin-top:6px;}
+.nbars-labels span{
+  text-align:center;font-family:'Barlow Condensed',sans-serif;
+  font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;
+}
+.nbars-sum{
+  text-align:center;margin-top:8px;
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;
+  letter-spacing:.4px;color:var(--ink);
+}
 .rest-card{
   background:var(--card);border-radius:20px;
   padding:30px 16px;text-align:center;color:var(--muted);font-size:13px;margin-top:12px;
@@ -718,6 +787,21 @@ html.standalone .bnav{min-height:72px;}
     <div class="hdr-date" id="n-date">—</div>
   </div>
   <div class="nutr-wrap">
+    <div class="wk-card nutr-week" id="nutr-week">
+      <div class="wk-head">
+        <button class="wk-arrow" onclick="nutrWeekShift(-1)" aria-label="Previous week">‹</button>
+        <div class="wk-label">
+          <div class="wk-month" id="nutr-week-month">—</div>
+          <div class="wk-range" id="nutr-week-range"></div>
+        </div>
+        <button class="wk-arrow" onclick="nutrWeekShift(1)" aria-label="Next week">›</button>
+      </div>
+      <div class="week-toggle" role="group" aria-label="Week style">
+        <button type="button" id="week-style-rings" onclick="setWeekStyle('rings')">Rings</button>
+        <button type="button" id="week-style-bars" onclick="setWeekStyle('bars')">Bars</button>
+      </div>
+      <div id="nutr-week-body"></div>
+    </div>
     <div class="past-banner"><span></span><button onclick="backToToday()">Back to today</button></div>
     <!-- Budget card -->
     <div class="budget-card">
@@ -1429,6 +1513,7 @@ function updateBudget() {
   document.getElementById('mb-carbs').style.width = Math.min(c/gp.carbs*100,100)+'%';
   document.getElementById('mb-fat').style.width = Math.min(f/gp.fat*100,100)+'%';
   renderBurnNote(today());
+  renderNutritionWeek();
 }
 function paintLeft(numEl, labelEl, left, withG) {
   if (!numEl) return;
@@ -1440,6 +1525,113 @@ function paintLeft(numEl, labelEl, left, withG) {
     labelEl.textContent = over ? 'over' : 'left';
     labelEl.classList.toggle('is-over', over);
   }
+}
+function weekStyle() {
+  try { return lsGet('sft_week_style') === 'bars' ? 'bars' : 'rings'; }
+  catch(e) { return 'rings'; }
+}
+function setWeekStyle(style) {
+  try { lsSet('sft_week_style', style === 'bars' ? 'bars' : 'rings'); } catch(e) {}
+  renderNutritionWeek();
+}
+function nutrWeekShift(n) {
+  wWeekStart = addDaysStr(wWeekStart, n * 7);
+  renderNutritionWeek();
+  try { renderWorkoutCal(); } catch(e) {}
+}
+function selectNutritionDay(ds) {
+  setViewDate(ds);
+}
+function dayCalStatus(ds) {
+  let eaten = 0, goal = 2600, left = 2600;
+  try {
+    const t = nutritionTotalsFor(ds);
+    eaten = Math.round(Number(t.caloriesEaten) || 0);
+    goal = Math.round(Number(t.calorieGoal) || 0);
+    left = Math.round(Number(t.caloriesRemaining) || 0);
+  } catch(e) {}
+  const future = ds > todayReal();
+  const logged = eaten > 0;
+  return {
+    eaten: eaten, goal: goal, left: left, future: future, logged: logged,
+    over: logged && left < 0,
+    ratio: goal > 0 ? eaten / goal : 0
+  };
+}
+function renderNutritionWeek() {
+  const body = document.getElementById('nutr-week-body');
+  const monthEl = document.getElementById('nutr-week-month');
+  if (!body || !monthEl) return;
+  const style = weekStyle();
+  const ringsBtn = document.getElementById('week-style-rings');
+  const barsBtn = document.getElementById('week-style-bars');
+  if (ringsBtn) ringsBtn.classList.toggle('on', style === 'rings');
+  if (barsBtn) barsBtn.classList.toggle('on', style === 'bars');
+  const tr = todayReal();
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(addDaysStr(wWeekStart, i));
+  const mid = new Date(days[3] + 'T12:00:00');
+  monthEl.textContent = mid.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const rangeEl = document.getElementById('nutr-week-range');
+  if (rangeEl) {
+    const f = new Date(days[0] + 'T12:00:00'), l = new Date(days[6] + 'T12:00:00');
+    rangeEl.textContent = days.indexOf(tr) !== -1
+      ? 'This week'
+      : f.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' + l.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  const DOW = ['S','M','T','W','T','F','S'];
+  body.innerHTML = style === 'bars' ? renderNutritionBars(days, DOW, tr) : renderNutritionRings(days, DOW, tr);
+}
+function renderNutritionRings(days, DOW, tr) {
+  const circ = 2 * Math.PI * 14;
+  return '<div class="nring-row">' + days.map((ds, i) => {
+    const st = dayCalStatus(ds);
+    const complete = st.logged && !st.over && (ds < tr || st.ratio >= 1);
+    let sweep = 0, arcClass = 'green';
+    if (!st.future && st.logged) {
+      if (st.over) { sweep = 1; arcClass = 'over'; }
+      else if (complete) sweep = 1;
+      else sweep = Math.max(0, Math.min(st.ratio, 1));
+    }
+    const offset = circ * (1 - sweep);
+    const cls = 'nring'
+      + (ds === tr ? ' today' : '')
+      + (ds === viewDate ? ' selected' : '')
+      + (st.future ? ' future' : '')
+      + (!st.logged || st.future ? ' empty' : '');
+    const num = new Date(ds + 'T12:00:00').getDate();
+    const arc = sweep > 0
+      ? '<circle class="nring-arc ' + arcClass + '" cx="18" cy="18" r="14" stroke-dasharray="' + circ.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"></circle>'
+      : '';
+    const check = complete ? '<span class="nring-check">✓</span>' : '';
+    return '<button type="button" class="' + cls + '" onclick="selectNutritionDay(\'' + ds + '\')">'
+      + '<span class="wk-dow">' + DOW[i] + '</span>'
+      + '<span class="nring-dial"><svg viewBox="0 0 36 36" aria-hidden="true">'
+      + '<circle class="nring-track" cx="18" cy="18" r="14"></circle>' + arc
+      + '</svg><span class="nring-num">' + num + '</span>' + check + '</span></button>';
+  }).join('') + '</div>';
+}
+function renderNutritionBars(days, DOW, tr) {
+  const maxRatio = 1.6;
+  let net = 0, any = false;
+  const cols = days.map((ds) => {
+    const st = dayCalStatus(ds);
+    if (ds <= tr && st.logged) { any = true; net += -st.left; }
+    const ratio = (st.future || !st.logged) ? 0 : Math.max(0, st.ratio);
+    const underPct = Math.min(ratio, 1) / maxRatio * 100;
+    const overPct = Math.max(0, Math.min(ratio, maxRatio) - 1) / maxRatio * 100;
+    const cls = 'nbar' + (ds === viewDate ? ' selected' : '') + (st.future ? ' future' : '');
+    return '<button type="button" class="' + cls + '" onclick="selectNutritionDay(\'' + ds + '\')">'
+      + '<span class="nbar-stack"><span class="nbar-under" style="height:' + underPct.toFixed(1) + '%"></span>'
+      + '<span class="nbar-over" style="height:' + overPct.toFixed(1) + '%"></span></span></button>';
+  }).join('');
+  const n = Math.abs(Math.round(net));
+  const sumText = (!any || net === 0)
+    ? '0 over this week'
+    : (net > 0 ? n.toLocaleString('en-US') + ' over this week' : n.toLocaleString('en-US') + ' under this week');
+  return '<div class="nbars"><div class="nbars-plot"><div class="nbars-goal" style="bottom:' + (100 / maxRatio).toFixed(1) + '%"></div>'
+    + cols + '</div><div class="nbars-labels">' + DOW.map(d => '<span>' + d + '</span>').join('')
+    + '</div><div class="nbars-sum">' + sumText + '</div></div>';
 }
 function delFood(mealId, foodId) {
   const nd = nutrData();
