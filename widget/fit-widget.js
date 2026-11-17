@@ -238,20 +238,20 @@ function mixHex(a, b, t) {
 function palette() {
   // The widget stays on the dark palette in both iPhone appearance modes.
   const hex = {
-    bgTop: "#1b2631",
-    bgBottom: "#10151a",
-    text: "#f4f7f8",
-    muted: "#93a0ad",
-    track: "#314152",
+    bgTop: "#000000",
+    bgBottom: "#000000",
+    text: "#f4f4f4",
+    muted: "#9a9a9a",
+    track: "#2a2a2a",
     cal: "#3dcf8e",
     pro: "#7aa2ff",
     accent: "#c5d0ff",
     warn: "#f0a36a",
     ok: "#8ee0b2",
     low: "#f0c27a",
-    line: "#9aafc2",
-    todayStroke: "#f7fbff",
-    divider: "#2c3a48"
+    line: "#8a8a8a",
+    todayStroke: "#f4f4f4",
+    divider: "#2a2a2a"
   };
   const out = { hex: hex, dark: true };
   const names = Object.keys(hex);
@@ -283,14 +283,8 @@ function text(dc, value, x, y, w, h, font, color, align) {
 }
 
 function paintBackground(dc, w, h, pal) {
-  const steps = 28;
-  for (let i = 0; i < steps; i++) {
-    const hex = mixHex(pal.hex.bgTop, pal.hex.bgBottom, steps === 1 ? 0 : i / (steps - 1));
-    dc.setFillColor(new Color(hex));
-    const y0 = Math.floor(h * i / steps);
-    const y1 = Math.floor(h * (i + 1) / steps);
-    dc.fillRect(new Rect(0, y0, w, (y1 - y0) + 1));
-  }
+  dc.setFillColor(new Color("#000000"));
+  dc.fillRect(new Rect(0, 0, w, h));
 }
 
 function strokeOval(dc, cx, cy, r, width, color) {
@@ -329,6 +323,15 @@ function strokeArc(dc, cx, cy, r, width, sweep, color) {
   }
 }
 
+function ringLeft(kind, eaten, goal, model) {
+  if (kind === "calories" && model && isFinite(Number(model.caloriesRemaining))) {
+    return Math.round(Number(model.caloriesRemaining));
+  }
+  const g = Math.round(Number(goal) || 0);
+  const e = Math.round(Number(eaten) || 0);
+  return g - e;
+}
+
 function drawRing(dc, cx, cy, r, width, eaten, goal, color, track) {
   strokeOval(dc, cx, cy, r, width, track);
   let sweep = goal > 0 ? eaten / goal : 0;
@@ -353,11 +356,12 @@ function paintRingPair(dc, x, y, width, pal, model, radius) {
     const hex = progressHex(ring.kind, ring.eaten, ring.goal, pal);
     const stroke = radius > 30 ? 9 : 7;
     drawRing(dc, ring.cx, cy, radius - 1, stroke, ring.eaten, ring.goal, new Color(hex), pal.track);
-    const label = fmt(ring.eaten);
+    const left = ringLeft(ring.kind, ring.eaten, ring.goal, model);
+    const over = left < 0;
+    const label = fmt(Math.abs(left));
     const fontSize = label.length >= 5 ? Math.max(11, radius * 0.42) : Math.max(13, radius * 0.52);
-    text(dc, label, ring.cx - radius + 6, cy - fontSize * 0.78, (radius - 6) * 2, fontSize + 3, Font.boldRoundedSystemFont(fontSize), pal.text, "center");
-    const unit = ring.kind === "protein" ? "protein" : "calories";
-    text(dc, unit, ring.cx - radius, cy + 1, radius * 2, 11, Font.mediumSystemFont(8), pal.muted, "center");
+    text(dc, label, ring.cx - radius + 6, cy - fontSize * 0.78, (radius - 6) * 2, fontSize + 3, Font.boldRoundedSystemFont(fontSize), over ? pal.low : pal.text, "center");
+    text(dc, over ? "over" : "left", ring.cx - radius, cy + 1, radius * 2, 11, Font.mediumSystemFont(8), over ? pal.low : pal.muted, "center");
     const goalText = ring.kind === "protein" ? fmt(ring.goal) + "g" : fmt(ring.goal);
     text(dc, goalText, ring.cx - radius, cy + radius + 6, radius * 2, 13, Font.mediumSystemFont(10), new Color(hex), "center");
   }
@@ -521,7 +525,7 @@ async function makeWidget() {
   let image = null;
   try { image = renderFace(family, model, isDarkMode()); } catch (e) { image = null; }
   try {
-    widget.backgroundColor = palette().bgBottom;
+    widget.backgroundColor = new Color("#000000");
   } catch (e) {}
   if (!image) {
     const line = widget.addText((model && model.note) || "Open Fit Tracker");
