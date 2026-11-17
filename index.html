@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000">
+<meta name="theme-color" content="#1a3a5c">
 <title>Shane's Fit Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -39,13 +39,13 @@
 }
 /* ── THEMES ── */
 body[data-theme="midnight"]{
-  --bg:#000; --ink:#f3f3f3; --card:#1c1c1c;
-  --hdr:#000; --navy:#39d47f; --orange:#ff8a3d; --gold:#ffc53d;
+  --bg:#0f1214; --ink:#edf1f4; --card:#191f24;
+  --hdr:#14181c; --navy:#39d47f; --orange:#ff8a3d; --gold:#ffc53d;
   --green:#39d47f; --red:#f0564a; --purple:#a78bfa;
-  --muted:#9a9a9a; --border:#2a2a2a; --chip:#262626;
-  --card-hover:#242424; --exbody:#111;
+  --muted:#8b949e; --border:#2a3138; --chip:#232b31;
+  --card-hover:#20272d; --exbody:#14191d;
   --water-on:#12303f; --water-on-b:#38bdf8; --wg1:#38bdf8; --wg2:#0ea5e9;
-  --swap-cur:#142418;
+  --swap-cur:#12301f;
   color-scheme:dark;
 }
 body[data-theme="ocean"]{
@@ -67,7 +67,7 @@ body[data-theme="forest"]{
   --swap-cur:#effaf1; --wg2:#1f6b45;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{font-size:16px;background:#000;}
+html{font-size:16px;}
 /* 10px always sits under the labels. Home-screen mode adds 20px because
    iOS often reports a 0px safe-area inset while still drawing the home indicator. */
 :root{
@@ -2445,7 +2445,7 @@ function updatePRs() {
 // ══════════════════════════════════════
 const THEMES = [
   {id:'classic',  name:'Classic',  sw:['#1a3a5c','#f0a500','#f4f1eb']},
-  {id:'midnight', name:'Midnight', sw:['#000000','#39d47f','#1c1c1c']},
+  {id:'midnight', name:'Midnight', sw:['#14181c','#39d47f','#0f1214']},
   {id:'ocean',    name:'Ocean',    sw:['#0b3550','#0e7490','#eef4f7']},
   {id:'crimson',  name:'Crimson',  sw:['#18181b','#e11d48','#f4f4f5']},
   {id:'forest',   name:'Forest',   sw:['#183d2b','#eab308','#f3f1ea']},
@@ -2475,7 +2475,7 @@ function syncThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (!meta) return;
   const theme = (ST && ST.theme) || 'midnight';
-  meta.setAttribute('content', theme === 'midnight' ? '#000' : (getComputedStyle(document.body).getPropertyValue('--hdr').trim() || '#000'));
+  meta.setAttribute('content', theme === 'midnight' ? '#1a3a5c' : (getComputedStyle(document.body).getPropertyValue('--hdr').trim() || '#1a3a5c'));
 }
 function themeColor(varName, fallback) {
   const v = getComputedStyle(document.body).getPropertyValue(varName).trim();
@@ -2980,7 +2980,7 @@ async function copyWidgetScript() {
     if (fbUser) { try { schedulePush(); } catch(e) {} }
     let script = '';
     try {
-      const res = await fetch('widget/fit-widget.js?v=9', {cache:'no-store'});
+      const res = await fetch('widget/fit-widget.js?v=15', {cache:'no-store'});
       if (!res.ok) throw new Error('load');
       script = await res.text();
     } catch(e) {
