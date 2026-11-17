@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a3a5c">
+<meta name="theme-color" content="#000">
 <title>Shane's Fit Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -39,13 +39,13 @@
 }
 /* ── THEMES ── */
 body[data-theme="midnight"]{
-  --bg:#0f1214; --ink:#edf1f4; --card:#191f24;
-  --hdr:#14181c; --navy:#39d47f; --orange:#ff8a3d; --gold:#ffc53d;
+  --bg:#000; --ink:#f3f3f3; --card:#1c1c1c;
+  --hdr:#000; --navy:#39d47f; --orange:#ff8a3d; --gold:#ffc53d;
   --green:#39d47f; --red:#f0564a; --purple:#a78bfa;
-  --muted:#8b949e; --border:#2a3138; --chip:#232b31;
-  --card-hover:#20272d; --exbody:#14191d;
+  --muted:#9a9a9a; --border:#2a2a2a; --chip:#262626;
+  --card-hover:#242424; --exbody:#111;
   --water-on:#12303f; --water-on-b:#38bdf8; --wg1:#38bdf8; --wg2:#0ea5e9;
-  --swap-cur:#12301f;
+  --swap-cur:#142418;
   color-scheme:dark;
 }
 body[data-theme="ocean"]{
@@ -67,7 +67,7 @@ body[data-theme="forest"]{
   --swap-cur:#effaf1; --wg2:#1f6b45;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{font-size:16px;}
+html{font-size:16px;background:#000;}
 /* 10px always sits under the labels. Home-screen mode adds 20px because
    iOS often reports a 0px safe-area inset while still drawing the home indicator. */
 :root{
@@ -192,8 +192,9 @@ html.standalone .bnav{min-height:72px;}
   position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
-.donut-cal{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;color:var(--navy);}
+.donut-cal{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;line-height:1;color:var(--navy);}
 .donut-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:1px;}
+.donut-cal.is-over,.donut-lbl.is-over,.mc-val.is-over,.mc-label.is-over{color:#e6c07b;}
 .budget-stats{flex:1;}
 .bs-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);}
 .bs-row:last-child{border-bottom:none;}
@@ -730,7 +731,7 @@ html.standalone .bnav{min-height:72px;}
           </svg>
           <div class="donut-center">
             <div class="donut-cal" id="d-eaten">0</div>
-            <div class="donut-lbl">eaten</div>
+            <div class="donut-lbl" id="d-ring-lbl">left</div>
           </div>
         </div>
         <div class="budget-stats">
@@ -752,21 +753,21 @@ html.standalone .bnav{min-height:72px;}
       <div class="macro-strip">
         <div class="macro-chip">
           <div class="mc-val p" id="m-protein">0g</div>
-          <div class="mc-label">Protein</div>
+          <div class="mc-label" id="ml-protein">left</div>
           <div class="mc-bar-bg"><div class="mc-bar p" id="mb-protein" style="width:0%"></div></div>
-          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-p">/ 195g</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-p">protein</div>
         </div>
         <div class="macro-chip">
           <div class="mc-val c" id="m-carbs">0g</div>
-          <div class="mc-label">Carbs</div>
+          <div class="mc-label" id="ml-carbs">left</div>
           <div class="mc-bar-bg"><div class="mc-bar c" id="mb-carbs" style="width:0%"></div></div>
-          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-c">/ 270g</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-c">carbs</div>
         </div>
         <div class="macro-chip">
           <div class="mc-val f" id="m-fat">0g</div>
-          <div class="mc-label">Fat</div>
+          <div class="mc-label" id="ml-fat">left</div>
           <div class="mc-bar-bg"><div class="mc-bar f" id="mb-fat" style="width:0%"></div></div>
-          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-f">/ 75g</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px" id="mg-f">fat</div>
         </div>
       </div>
     </div>
@@ -1411,23 +1412,34 @@ function updateBudget() {
   const cal=t.cal, p=t.p, c=t.c, f=t.f, burned=t.burned;
   const gp=prof();
   const budget=gp.cal, remaining=budget-cal+burned;
-  document.getElementById('d-eaten').textContent = Math.round(cal);
   document.getElementById('d-burned').textContent = Math.round(burned);
   const remEl = document.getElementById('d-remaining');
   remEl.textContent = Math.round(remaining);
   remEl.className = 'bs-val ' + (remaining>200?'green':remaining>0?'orange':'red');
-  // ring (226 = 2*pi*36)
-  const pct = Math.min(cal/budget, 1);
-  document.getElementById('d-ring').style.strokeDashoffset = 226 - 226*pct;
-  document.getElementById('d-ring').style.stroke = cal>budget ? 'var(--red)' : 'var(--navy)';
-  // macros
-  document.getElementById('m-protein').textContent = Math.round(p)+'g';
-  document.getElementById('m-carbs').textContent = Math.round(c)+'g';
-  document.getElementById('m-fat').textContent = Math.round(f)+'g';
+  paintLeft(document.getElementById('d-eaten'), document.getElementById('d-ring-lbl'), remaining, false);
+  // ring (226 = 2*pi*36) still fills with how much of the goal is eaten
+  const pct = budget>0 ? Math.min(cal/budget, 1) : 0;
+  const ring = document.getElementById('d-ring');
+  ring.style.strokeDashoffset = 226 - 226*pct;
+  ring.style.stroke = remaining<0 ? '#e6c07b' : 'var(--navy)';
+  paintLeft(document.getElementById('m-protein'), document.getElementById('ml-protein'), gp.protein-p, true);
+  paintLeft(document.getElementById('m-carbs'), document.getElementById('ml-carbs'), gp.carbs-c, true);
+  paintLeft(document.getElementById('m-fat'), document.getElementById('ml-fat'), gp.fat-f, true);
   document.getElementById('mb-protein').style.width = Math.min(p/gp.protein*100,100)+'%';
   document.getElementById('mb-carbs').style.width = Math.min(c/gp.carbs*100,100)+'%';
   document.getElementById('mb-fat').style.width = Math.min(f/gp.fat*100,100)+'%';
   renderBurnNote(today());
+}
+function paintLeft(numEl, labelEl, left, withG) {
+  if (!numEl) return;
+  const over = left < 0;
+  const n = Math.abs(Math.round(left));
+  numEl.textContent = (withG ? String(n) : n.toLocaleString('en-US')) + (withG ? 'g' : '');
+  numEl.classList.toggle('is-over', over);
+  if (labelEl) {
+    labelEl.textContent = over ? 'over' : 'left';
+    labelEl.classList.toggle('is-over', over);
+  }
 }
 function delFood(mealId, foodId) {
   const nd = nutrData();
@@ -2433,7 +2445,7 @@ function updatePRs() {
 // ══════════════════════════════════════
 const THEMES = [
   {id:'classic',  name:'Classic',  sw:['#1a3a5c','#f0a500','#f4f1eb']},
-  {id:'midnight', name:'Midnight', sw:['#14181c','#39d47f','#0f1214']},
+  {id:'midnight', name:'Midnight', sw:['#000000','#39d47f','#1c1c1c']},
   {id:'ocean',    name:'Ocean',    sw:['#0b3550','#0e7490','#eef4f7']},
   {id:'crimson',  name:'Crimson',  sw:['#18181b','#e11d48','#f4f4f5']},
   {id:'forest',   name:'Forest',   sw:['#183d2b','#eab308','#f3f1ea']},
@@ -2442,6 +2454,7 @@ function applyTheme(id) {
   ST.theme = id;
   save();
   document.body.setAttribute('data-theme', id==='classic' ? '' : id);
+  syncThemeColor();
   renderThemes();
   updateBudget();
   renderProgress(); // redraw chart with new colors
@@ -2457,6 +2470,12 @@ function renderThemes() {
       <span class="theme-name">${t.name}</span>
     </button>
   `).join('');
+}
+function syncThemeColor() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  const theme = (ST && ST.theme) || 'midnight';
+  meta.setAttribute('content', theme === 'midnight' ? '#000' : (getComputedStyle(document.body).getPropertyValue('--hdr').trim() || '#000'));
 }
 function themeColor(varName, fallback) {
   const v = getComputedStyle(document.body).getPropertyValue(varName).trim();
@@ -3040,9 +3059,9 @@ function applyProfileUI() {
   const e2=document.getElementById('p-goal-sub');
   if(e2) e2.textContent = `Start: ${p.startW} lbs · Goal: ${p.goalW} lbs`;
   const e3=document.getElementById('d-budget'); if(e3) e3.textContent = fmt(p.cal);
-  const mp=document.getElementById('mg-p'); if(mp) mp.textContent='/ '+p.protein+'g';
-  const mc=document.getElementById('mg-c'); if(mc) mc.textContent='/ '+p.carbs+'g';
-  const mf=document.getElementById('mg-f'); if(mf) mf.textContent='/ '+p.fat+'g';
+  const mp=document.getElementById('mg-p'); if(mp) mp.textContent='protein';
+  const mc=document.getElementById('mg-c'); if(mc) mc.textContent='carbs';
+  const mf=document.getElementById('mg-f'); if(mf) mf.textContent='fat';
   const ps=document.getElementById('profile-summary');
   if(ps) ps.innerHTML = ST.profile
     ? `<div style="font-size:13px;font-weight:600;margin-bottom:10px">${p.name||'No name set'} · ${fmt(p.cal)} cal · ${p.protein}g protein · ${p.startW} → ${p.goalW} lbs</div>`
@@ -3084,6 +3103,7 @@ function markHomeScreen() {
   if(migrated) save();
   if(!ST.theme) ST.theme = 'midnight'; // default theme
   if(ST.theme!=='classic') document.body.setAttribute('data-theme', ST.theme);
+  try { syncThemeColor(); } catch(e) {}
   const dt = new Date(viewDate+'T12:00:00');
   const map = {1:0,2:1,3:2,4:3,5:4};
   if(map[dt.getDay()] !== undefined) activeDay = map[dt.getDay()];
