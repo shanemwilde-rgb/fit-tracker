@@ -512,6 +512,22 @@ html.standalone .bnav{min-height:72px;}
   display:flex;align-items:center;justify-content:center;
   border:2px solid var(--card);
 }
+.wk-dial{position:relative;width:42px;height:42px;display:flex;align-items:center;justify-content:center;}
+.wk-dial svg{position:absolute;inset:0;width:42px;height:42px;transform:rotate(-90deg);}
+.wk-track{fill:none;stroke:var(--border);stroke-width:2.5;}
+.wk-arc{fill:none;stroke:var(--green);stroke-width:2.5;stroke-linecap:round;}
+.wk-day.progress .wk-num{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink);}
+.wk-day.progress.today .wk-num,
+.wk-day.progress.selected .wk-num{
+  background:transparent;color:var(--ink);border-color:var(--orange);box-shadow:none;
+}
+.wk-day.complete .wk-num,
+.wk-day.complete.selected .wk-num,
+.wk-day.complete.today .wk-num,
+.wk-day.selected.complete .wk-num{
+  background:var(--green);border-color:var(--green);color:#fff;box-shadow:none;
+}
+.wk-day.complete .wk-check{background:#fff;color:var(--green);border-color:var(--card);}
 /* Nutrition week strip */
 .nutr-week{margin-top:14px;}
 .week-toggle{
@@ -1250,7 +1266,7 @@ const DAYS_DATA = [
     {id:'tri_ext',name:'Overhead DB Tricep Extension',target:'3 × 12',ss:true},
     {id:'cable_fly',name:'Cable Chest Fly',target:'2 × 12–15',ss:false},
    ],
-   cardio:{type:'HIIT 8 min',desc:'30s hard → 90s easy × 4 (bike, rower, or jump rope)'}},
+   cardio:null},
   {key:'tue',label:'Tue',title:'Pull A',focus:'Back width · Biceps · 45 min',
    exercises:[
     {id:'pullups',name:'Weighted Pull-Ups',target:'4 × 6–8 · add load past 10',ss:false},
@@ -1259,7 +1275,7 @@ const DAYS_DATA = [
     {id:'face_pull',name:'Face Pulls',target:'3 × 15–20',ss:true},
     {id:'incline_curl',name:'Incline DB Curl',target:'3 × 10–12',ss:false},
    ],
-   cardio:{type:'Zone 2 — 12 min',desc:'Easy pace, nose-breathing, HR 130–145 bpm'}},
+   cardio:null},
   {key:'wed',label:'Wed',title:'Legs + Core',focus:'Quads · Hams · Glutes · Abs',
    exercises:[
     {id:'squat',name:'Back Squat',target:'4 × 6–8 · 3 min rest',ss:false},
@@ -1278,7 +1294,7 @@ const DAYS_DATA = [
     {id:'skull',name:'EZ Bar Skull Crushers',target:'3 × 10–12',ss:true},
     {id:'dips',name:'Dips (weighted past 12)',target:'2 × 10–12',ss:false},
    ],
-   cardio:{type:'HIIT 8 min',desc:'20s max effort → 40s rest × 8'}},
+   cardio:null},
   {key:'fri',label:'Fri',title:'Pull B',focus:'Posterior chain · Arms · Conditioning',
    exercises:[
     {id:'deadlift',name:'Deadlift (or Trap Bar)',target:'3 × 5 · 3 min rest',ss:false},
@@ -1287,8 +1303,13 @@ const DAYS_DATA = [
     {id:'rear_fly',name:'Cable Rear Delt Fly',target:'3 × 15',ss:true},
     {id:'straight_pull',name:'Straight-Arm Lat Pulldown',target:'2 × 15',ss:false},
    ],
-   cardio:{type:'Circuit 3 rounds',desc:'DB Swings ×15 → Step-Ups ×10 each → Band Pull-Aparts ×20 → Rest 60s'}},
+   cardio:null},
 ];
+const CARDIO_ITEM = {id:'cardio_walk', name:'Cardio: 30 min treadmill walk', target:'30 min · easy pace, before lifting', ss:false, cardioItem:true};
+DAYS_DATA.forEach(d => {
+  d.exercises.unshift(CARDIO_ITEM);
+  d.cardio = null;
+});
 // Alternative movements for each exercise (same muscle group)
 const ALTS = {
   bench:[{id:'db_bench',name:'Flat DB Press'},{id:'machine_chest',name:'Machine Chest Press'}],
@@ -2124,17 +2145,44 @@ function renderWorkoutCal() {
     ? 'This week'
     : f.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+l.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const DOW = ['S','M','T','W','T','F','S'];
+  const circ = 2 * Math.PI * 15;
   strip.innerHTML = days.map((ds,i)=>{
-    const done = dayWorkoutsDone(ST[ds]).length > 0;
+    const prog = workoutDayProgress(ds);
+    const partial = prog && prog.done > 0 && prog.done < prog.total;
+    const full = prog && prog.total > 0 && prog.done === prog.total;
     const cls = 'wk-day'
       + (ds===tr ? ' today' : '')
       + (ds===viewDate ? ' selected' : '')
-      + (done ? ' done' : '');
+      + (partial ? ' progress' : '')
+      + (full ? ' complete' : '');
+    const num = new Date(ds+'T12:00:00').getDate();
+    let dial = `<span class="wk-num">${num}</span>`;
+    if(partial){
+      const offset = circ * (1 - prog.done / prog.total);
+      dial = `<span class="wk-dial"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="wk-track" cx="18" cy="18" r="15"></circle><circle class="wk-arc" cx="18" cy="18" r="15" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"></circle></svg><span class="wk-num">${num}</span></span>`;
+    } else if(full){
+      dial = `<span class="wk-num">${num}<span class="wk-check">✓</span></span>`;
+    }
     return `<button class="${cls}" onclick="selectWorkoutDay('${ds}')">
       <span class="wk-dow">${DOW[i]}</span>
-      <span class="wk-num">${new Date(ds+'T12:00:00').getDate()}${done?'<span class="wk-check">✓</span>':''}</span>
+      ${dial}
     </button>`;
   }).join('');
+}
+function workoutDayProgress(ds) {
+  const dt = new Date(ds+'T12:00:00');
+  const idx = {1:0,2:1,3:2,4:3,5:4}[dt.getDay()];
+  if(idx === undefined) return null;
+  const day = DAYS_DATA[idx];
+  const rec = ST[ds] && ST[ds][day.key];
+  const items = day.exercises || [];
+  let done = 0;
+  items.forEach(ex => {
+    const id = effectiveEx(ex).id;
+    const sets = rec && rec.sets && rec.sets[id];
+    if(sets && sets.length && sets.every(s => s && s.done)) done++;
+  });
+  return { done, total: items.length };
 }
 function selectWorkoutDay(ds) {
   setViewDate(ds);
@@ -2174,26 +2222,6 @@ function buildPanel(day, idx) {
     prevSS=exRaw.ss;
     html+=buildExCard(day.key, effectiveEx(exRaw), ei);
   });
-  if(day.cardio){
-    html+=`
-      <div class="cardio-blk">
-        <h4>🔥 ${day.cardio.type}</h4>
-        <p>${day.cardio.desc}</p>
-        <div class="cardio-inputs">
-          <div class="ci-field">
-            <label class="ci-label">Duration (min)</label>
-            <input type="number" class="ci" placeholder="10" value="${dd.cardio.duration||''}"
-              onchange="saveCardio('${day.key}','duration',this.value)">
-          </div>
-          <div class="ci-field">
-            <label class="ci-label">Calories burned</label>
-            <input type="number" class="ci" placeholder="120" value="${dd.cardio.calories||''}"
-              onchange="saveCardio('${day.key}','calories',this.value)">
-          </div>
-        </div>
-      </div>
-    `;
-  }
   return html;
 }
 function effectiveEx(origEx) {
@@ -2223,6 +2251,21 @@ function findLastSets(exId) {
 }
 function buildExCard(dk, ex, ei) {
   const dd = dayData(dk);
+  if(ex.cardioItem){
+    if(!dd.sets[ex.id] || !dd.sets[ex.id].length) dd.sets[ex.id]=[{done:false}];
+    const on = !!dd.sets[ex.id][0].done;
+    return `
+      <div class="ex-card">
+        <div class="ex-hdr" style="cursor:default">
+          <div class="ex-num">${String(ei+1).padStart(2,'0')}</div>
+          <div class="ex-hdr-info">
+            <div class="ex-hdr-name">${ex.name}</div>
+            <div class="ex-hdr-target">${ex.target}</div>
+          </div>
+          <button class="sdone ${on?'on':''}" onclick="toggleCardio('${dk}','${ex.id}',this)" aria-label="Mark cardio done">${on?'✓':''}</button>
+        </div>
+      </div>`;
+  }
   if(!dd.sets[ex.id] || !dd.sets[ex.id].length) dd.sets[ex.id]=[{w:'',r:'',done:false}];
   let sets = dd.sets[ex.id];
   const hasReal = sets.some(s=>!s.pf && ((s.w&&parseFloat(s.w)>0)||(s.r&&parseFloat(s.r)>0)));
@@ -2344,6 +2387,18 @@ function toggleSet(dk,exId,si,btn) {
   btn.classList.toggle('on');
   btn.textContent=s.done?'✓':'';
   updatePRs();
+  try { renderWorkoutCal(); } catch(e) {}
+}
+function toggleCardio(dk, exId, btn) {
+  const dd = dayData(dk);
+  if(!dd.sets[exId] || !dd.sets[exId].length) dd.sets[exId] = [{done:false}];
+  const s = dd.sets[exId][0];
+  s.done = !s.done;
+  s.pf = false;
+  save();
+  btn.classList.toggle('on', s.done);
+  btn.textContent = s.done ? '✓' : '';
+  try { renderWorkoutCal(); } catch(e) {}
 }
 function addSet(dk,exId,btn) {
   const dd=dayData(dk);
