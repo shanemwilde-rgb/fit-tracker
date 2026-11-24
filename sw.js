@@ -3,7 +3,7 @@
 // so a home-screen app can keep an old index.html (and the old tab bar) for
 // the whole 10 minutes. The app shell is fetched with cache: 'no-store'.
 // The cache below is only the offline fallback.
-const CACHE = 'fit-tracker-v19';
+const CACHE = 'fit-tracker-v20';
 
 self.addEventListener('install', e => {
   e.waitUntil(self.skipWaiting());

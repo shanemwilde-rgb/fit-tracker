@@ -887,6 +887,85 @@ html.standalone .bnav{min-height:72px;}
   pointer-events:none;
 }
 .scan-hint{padding:16px 16px 36px;text-align:center;color:rgba(255,255,255,.65);font-size:13px;}
+.volt-hero-actions{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+.volt-hero-actions .weight-log-btn{padding:8px 14px;}
+.guide-timer{background:transparent !important;color:var(--ink) !important;border:1px solid var(--border) !important;}
+.ex-fold{
+  width:32px;height:32px;border:none;background:transparent;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 32px;
+}
+.ex-fold svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+.guide{
+  position:fixed;inset:0;z-index:460;display:none;flex-direction:column;
+  background:var(--bg);color:var(--ink);
+  padding:calc(14px + env(safe-area-inset-top, 0px)) 16px calc(18px + env(safe-area-inset-bottom, 0px));
+}
+.guide.open{display:flex;}
+.guide svg{stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+.guide-top{display:flex;align-items:center;gap:8px;}
+.guide-icon{
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--border);
+  background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.guide-icon svg{width:22px;height:22px;}
+.guide-clocks{flex:1;text-align:center;}
+.guide-clock{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:0;}
+.guide-setclock{font-size:12px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px;}
+.guide-dots{display:flex;gap:6px;justify-content:center;margin:12px 0 4px;flex-wrap:wrap;}
+.guide-dot{width:8px;height:8px;border-radius:50%;background:var(--border);border:none;padding:0;cursor:pointer;}
+.guide-dot.on{background:var(--navy);}
+.guide-dot.done{background:var(--navy);box-shadow:0 0 0 2px var(--bg), 0 0 0 3px var(--navy);}
+.guide-pips{display:flex;gap:5px;justify-content:center;margin:6px 0 10px;}
+.guide-pip{width:18px;height:4px;border-radius:99px;background:var(--border);}
+.guide-pip.on{background:var(--navy);}
+.guide-pip.done{background:var(--navy);opacity:.45;}
+.guide-body{flex:1;overflow:auto;display:flex;flex-direction:column;min-height:0;}
+.guide-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:-0.02em;font-size:28px;line-height:.95;margin:8px 0 4px;}
+.guide-kicker{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
+.guide-note{color:var(--muted);font-size:13px;margin:6px 0 12px;}
+.guide-ss{color:var(--orange);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
+.guide-list{display:flex;flex-direction:column;gap:8px;margin:8px 0 16px;}
+.guide-row{
+  display:flex;align-items:center;gap:10px;text-align:left;width:100%;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--ink);
+  padding:12px;cursor:pointer;
+}
+.guide-row.on{border-color:var(--navy);}
+.guide-row b{display:block;font-size:15px;}
+.guide-row span{color:var(--muted);font-size:12px;}
+.guide-go,.guide-check{
+  border:none;border-radius:16px;background:var(--navy);color:var(--on-accent);
+  font-size:20px;font-weight:800;padding:16px;cursor:pointer;width:100%;
+}
+.guide-stage{flex:1;display:flex;flex-direction:column;}
+.guide-fields{display:flex;gap:10px;margin:12px 0;}
+.guide-fields label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;}
+.guide-fields input{
+  width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);
+  background:var(--card);color:var(--ink);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;
+}
+.guide-nav{display:flex;gap:10px;margin-top:16px;}
+.guide-nav button{
+  flex:1;height:48px;border-radius:14px;border:1px solid var(--border);
+  background:var(--card);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.guide-nav svg{width:22px;height:22px;}
+.guide-check{height:84px;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.guide-check svg{width:28px;height:28px;}
+.guide-check.on{background:var(--navy);}
+.guide-rest{text-align:center;padding:12px 0 8px;}
+.guide-rest b{display:block;font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--navy);}
+.guide-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0 12px;}
+.guide-chips button,.guide-skip{
+  border:1px solid var(--border);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700;
+}
+.guide-cardio{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.guide-cardio b{font-size:64px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--navy);}
+.guide-sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.guide-sum div{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;}
+.guide-sum b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+.guide-sum span{color:var(--muted);font-size:12px;}
 .widget-note{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:10px;}
 .widget-today{font-size:13px;font-weight:600;margin-bottom:10px;}
 .widget-key{
@@ -911,7 +990,8 @@ body[data-theme="volt"] .wk-month,
 body[data-theme="volt"] .modal-title,
 body[data-theme="volt"] .cal-month,
 body[data-theme="volt"] h3,
-body[data-theme="volt"] .volt-hero-title{
+body[data-theme="volt"] .volt-hero-title,
+body[data-theme="volt"] .guide-title{
   font-family:Archivo,sans-serif;
   font-stretch:expanded;
   font-weight:800;
@@ -1236,6 +1316,19 @@ body[data-theme="volt"] .weight-log-btn:hover{opacity:1;}
   <button class="bnav-btn" onclick="goScreen('calendar',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3.5V7"/><path d="M16 3.5V7"/></svg></span>Calendar</button>
   <button class="bnav-btn" onclick="goScreen('progress',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5 9 11l3.2 3.2L20 6.5"/><path d="M14.5 6.5H20V12"/></svg></span>Progress</button>
 </nav>
+<div class="guide" id="guide" aria-hidden="true">
+  <div class="guide-top">
+    <button type="button" class="guide-icon" onclick="guideExit()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="guide-clocks">
+      <div class="guide-clock" id="guide-clock">00:00</div>
+      <div class="guide-setclock" id="guide-setclock">Set 00:00</div>
+    </div>
+    <button type="button" class="guide-icon" id="guide-pause" onclick="guidePause()" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+    <button type="button" class="guide-icon" onclick="guideList(true)" aria-label="Exercises"><svg viewBox="0 0 24 24"><path d="M9 7h11M9 12h11M9 17h11M4 7h.01M4 12h.01M4 17h.01"/></svg></button>
+  </div>
+  <div class="guide-dots" id="guide-dots"></div>
+  <div class="guide-body" id="guide-body"></div>
+</div>
 <div class="timer-overlay" id="timer-overlay">
   <div class="timer-top">
     <button type="button" onclick="closeTimer()">Close</button>
@@ -2488,7 +2581,10 @@ function buildPanel(day, idx) {
         <div class="volt-hero-title">${day.title}</div>
         <div class="volt-hero-focus">${day.focus}</div>
       </div>
-      <button type="button" class="weight-log-btn" onclick="openTimer('amrap')">Timer</button>
+      <div class="volt-hero-actions">
+        <button type="button" class="weight-log-btn" onclick="openGuide()">${guideCta()}</button>
+        <button type="button" class="weight-log-btn guide-timer" onclick="openTimer('amrap')">Timer</button>
+      </div>
     </div>`:''}
   `;
   let prevSS=false;
@@ -2527,42 +2623,27 @@ function findLastSets(exId) {
 function buildExCard(dk, ex, ei) {
   const dd = dayData(dk);
   if(ex.cardioItem){
-    if(!dd.sets[ex.id] || !dd.sets[ex.id].length) dd.sets[ex.id]=[{done:false}];
+    ensureExerciseSets(dk, ex);
     const on = !!dd.sets[ex.id][0].done;
     return `
       <div class="ex-card">
-        <div class="ex-hdr" style="cursor:default">
+        <div class="ex-hdr" onclick="openGuide(${ei})">
           <div class="ex-num">${String(ei+1).padStart(2,'0')}</div>
           <div class="ex-hdr-info">
             <div class="ex-hdr-name">${ex.name}</div>
             <div class="ex-hdr-target">${displayTarget(ex)}</div>
           </div>
-          <button class="sdone ${on?'on':''}" onclick="toggleCardio('${dk}','${ex.id}',this)" aria-label="Mark cardio done">${on?'✓':''}</button>
+          <button class="sdone ${on?'on':''}" onclick="event.stopPropagation();toggleCardio('${dk}','${ex.id}',this)" aria-label="Mark cardio done">${on?'✓':''}</button>
         </div>
       </div>`;
   }
-  if(!dd.sets[ex.id] || !dd.sets[ex.id].length) dd.sets[ex.id]=[{w:'',r:'',done:false}];
-  let sets = dd.sets[ex.id];
-  const hasReal = sets.some(s=>!s.pf && ((s.w&&parseFloat(s.w)>0)||(s.r&&parseFloat(s.r)>0)));
-  const last = findLastSets(ex.id);
-  let prefilled = false;
-  let suggestNote = '';
-  if(!hasReal && last) {
-    const tip = suggestLoad(ex, last.sets, last.date);
-    dd.sets[ex.id] = last.sets.map(s=>{
-      let w = s.w||'';
-      if(tip && w && parseFloat(w)>0){
-        const next = Math.round((parseFloat(w)*tip.factor + tip.add)*2)/2;
-        w = String(next);
-      }
-      return {w:w, r:s.r||'', done:false, pf:true};
-    });
-    sets = dd.sets[ex.id];
-    prefilled = true;
-    suggestNote = tip && tip.note ? tip.note : '';
-  }
+  const ready = ensureExerciseSets(dk, ex);
+  let sets = ready.sets;
+  const prefilled = ready.prefilled;
+  const suggestNote = ready.note;
   const best = getBest(sets);
   const isPR = checkPR(ex.id, sets);
+  const last = findLastSets(ex.id);
   const lastDt = last ? new Date(last.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : null;
   const lastMax = last ? Math.max(...last.sets.map(s=>parseFloat(s.w)||0)) : 0;
   const lastHint = last && lastMax>0 ? ` · <span class="ex-last">Last: ${lastMax} lbs (${lastDt})</span>` : '';
@@ -2582,7 +2663,7 @@ function buildExCard(dk, ex, ei) {
   `).join('');
   return `
     <div class="ex-card">
-      <div class="ex-hdr" onclick="toggleEx(this)">
+      <div class="ex-hdr" onclick="openGuide(${ei})">
         <div class="ex-num">${String(ei+1).padStart(2,'0')}</div>
         <div class="ex-hdr-info">
           <div class="ex-hdr-name">${ex.name}${isPR?'<span class="pr-tag">PR</span>':''}${ex.swapped?'<span class="swapped-tag">Swapped</span>':''}</div>
@@ -2590,6 +2671,7 @@ function buildExCard(dk, ex, ei) {
         </div>
         <div class="ex-hdr-right">
           <div class="ex-best">${best}</div>
+          <button type="button" class="ex-fold" onclick="event.stopPropagation();toggleEx(this.closest('.ex-hdr'))" aria-label="Log sets here"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
         </div>
       </div>
       <div class="ex-body">
@@ -4115,6 +4197,561 @@ function saveAmrap() {
   save();
   showToast('✅ AMRAP saved');
   closeTimer();
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function guidePlan(ex) {
+  if (ex && ex.cardioItem) {
+    const m = String(ex.target || '').match(/(\d+)\s*min/i);
+    const minutes = m ? +m[1] : 30;
+    return { kind:'time', count:1, minutes, reps:'', rest:0, fill:'', label: minutes + ' min' };
+  }
+  const t = displayTarget(ex);
+  const setsM = String(t).match(/(\d+)\s*×/);
+  const count = setsM ? Math.max(1, +setsM[1]) : 3;
+  const range = repRange(t);
+  let reps = '';
+  if (range) reps = range.bottom + '–' + range.top;
+  else {
+    const one = String(t).match(/×\s*(\d+)/);
+    reps = one ? one[1] : '';
+  }
+  let rest = 60;
+  const span = String(t).match(/(\d+)\s*[–-]\s*(\d+)\s*s/);
+  const mins = String(t).match(/(\d+)\s*min/);
+  const secs = String(t).match(/(\d+)\s*s/);
+  if (span) rest = +span[1];
+  else if (mins && /rest/i.test(t)) rest = +mins[1] * 60;
+  else if (secs) rest = +secs[1];
+  return { kind:'reps', count, reps, rest, fill: range ? String(range.bottom) : reps, label: reps ? reps + ' reps' : 'reps' };
+}
+function ensureExerciseSets(dk, ex) {
+  const dd = dayData(dk);
+  const plan = guidePlan(ex);
+  if (!dd.sets) dd.sets = {};
+  if (ex.cardioItem) {
+    if (!dd.sets[ex.id] || !dd.sets[ex.id].length) dd.sets[ex.id] = [{done:false}];
+    return { sets: dd.sets[ex.id], prefilled:false, note:'' };
+  }
+  if (!dd.sets[ex.id]) dd.sets[ex.id] = [];
+  let sets = dd.sets[ex.id];
+  const hasReal = sets.some(s => s && !s.pf && ((s.w && parseFloat(s.w) > 0) || (s.r && parseFloat(s.r) > 0) || s.done));
+  const last = findLastSets(ex.id);
+  let prefilled = false;
+  let note = '';
+  const blank = !sets.length || sets.every(s => s && !s.done && !(s.w && String(s.w).length) && !(s.r && String(s.r).length));
+  if (!hasReal && blank && last) {
+    const tip = suggestLoad(ex, last.sets, last.date);
+    dd.sets[ex.id] = last.sets.map(s => {
+      let w = s.w || '';
+      if (tip && w && parseFloat(w) > 0) w = String(Math.round((parseFloat(w) * tip.factor + tip.add) * 2) / 2);
+      return { w:w, r:s.r || plan.fill || '', done:false, pf:true };
+    });
+    sets = dd.sets[ex.id];
+    prefilled = true;
+    note = tip && tip.note ? tip.note : 'Pre-filled from your last session';
+  }
+  while (sets.length < plan.count) {
+    const prev = sets[sets.length - 1];
+    sets.push({ w: prev && prev.w || '', r: (prev && prev.r) || plan.fill || '', done:false, pf:true });
+  }
+  return { sets, prefilled, note };
+}
+function guideDay() {
+  const dt = new Date((typeof viewDate === 'string' ? viewDate : today()) + 'T12:00:00');
+  const idx = {1:0,2:1,3:2,4:3,5:4}[dt.getDay()];
+  if (idx === undefined) return null;
+  return { idx, day: DAYS_DATA[idx] };
+}
+function guideState() {
+  const ctx = guideDay();
+  if (!ctx) return null;
+  const dd = dayData(ctx.day.key);
+  if (!dd.guide) dd.guide = { startedAt:0, pausedMs:0, pausedAt:null, running:false, ei:0, si:0, setFrom:0, setPaused:0, restUntil:0, cardioEnd:0, finished:false };
+  return { idx: ctx.idx, day: ctx.day, dd, g: dd.guide };
+}
+function guideCta() {
+  const ctx = guideDay();
+  if (!ctx) return 'Start';
+  const dd = ST[today()] && ST[today()][ctx.day.key];
+  const g = dd && dd.guide;
+  if (!g || !g.startedAt) return 'Start';
+  if (g.finished) return 'Summary';
+  return 'Resume';
+}
+function guideNow(g) { return g.pausedAt || Date.now(); }
+function guideSessionMs(g) {
+  if (!g.startedAt) return 0;
+  return Math.max(0, guideNow(g) - g.startedAt - (g.pausedMs || 0));
+}
+function guideSetMs(g) {
+  if (!g.setFrom) return 0;
+  return Math.max(0, guideNow(g) - g.setFrom - (g.setPaused || 0));
+}
+function fmtUp(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h) return h + ':' + String(m % 60).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+  return String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+}
+function guideGroup(day, ei) {
+  const list = day.exercises;
+  if (!list[ei] || !list[ei].ss) return [ei];
+  let a = ei, b = ei;
+  while (a > 0 && list[a - 1].ss) a--;
+  while (b < list.length - 1 && list[b + 1].ss) b++;
+  const idxs = [];
+  for (let i = a; i <= b; i++) if (list[i].ss) idxs.push(i);
+  return idxs.length ? idxs : [ei];
+}
+function guideAdvance(day, ei, si) {
+  const group = guideGroup(day, ei);
+  const undoneAt = (n, s) => {
+    const ex = effectiveEx(day.exercises[n]);
+    const sets = ensureExerciseSets(day.key, ex).sets;
+    return sets[s] && !sets[s].done;
+  };
+  if (group.length > 1) {
+    const pos = group.indexOf(ei);
+    for (let step = 1; step <= group.length; step++) {
+      const ni = group[(pos + step) % group.length];
+      if (undoneAt(ni, si)) return { ei: ni, si: si };
+    }
+    for (let s = si + 1; s < 12; s++) {
+      for (let i = 0; i < group.length; i++) {
+        const ni = group[i];
+        const plan = guidePlan(effectiveEx(day.exercises[ni]));
+        if (s < plan.count && undoneAt(ni, s)) return { ei: ni, si: s };
+      }
+    }
+  }
+  const cur = ensureExerciseSets(day.key, effectiveEx(day.exercises[ei])).sets;
+  for (let s = si + 1; s < cur.length; s++) if (cur[s] && !cur[s].done) return { ei, si: s };
+  for (let n = ei + 1; n < day.exercises.length; n++) {
+    const sets = ensureExerciseSets(day.key, effectiveEx(day.exercises[n])).sets;
+    for (let s = 0; s < sets.length; s++) if (sets[s] && !sets[s].done) return { ei: n, si: s };
+  }
+  for (let n = 0; n < ei; n++) {
+    const sets = ensureExerciseSets(day.key, effectiveEx(day.exercises[n])).sets;
+    for (let s = 0; s < sets.length; s++) if (sets[s] && !sets[s].done) return { ei: n, si: s };
+  }
+  return null;
+}
+let guideTimer = null;
+let guideBeepMark = -1;
+let guideShowList = false;
+function guideArm() {
+  if (guideTimer) clearInterval(guideTimer);
+  guideTimer = setInterval(guideTick, 200);
+  guideTick();
+}
+function guideBind() {
+  const root = document.getElementById('guide');
+  if (!root || root.dataset.bound) return;
+  root.dataset.bound = '1';
+  let x0 = null;
+  root.addEventListener('touchstart', e => {
+    if (e.target.closest('input,button,a,label')) { x0 = null; return; }
+    x0 = e.changedTouches[0].clientX;
+  }, {passive:true});
+  root.addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) < 48) return;
+    guideNudge(dx < 0 ? 1 : -1);
+  }, {passive:true});
+}
+function openGuide(ei) {
+  const st = guideState();
+  if (!st) { showToast('Rest day — no guided session'); return; }
+  try { closeTimer(); } catch(e) {}
+  try { hideRestOffer(); } catch(e) {}
+  guideShowList = false;
+  if (typeof ei === 'number') {
+    st.g.ei = ei;
+    const ex = effectiveEx(st.day.exercises[ei]);
+    const sets = ensureExerciseSets(st.day.key, ex).sets;
+    const undone = sets.findIndex(s => s && !s.done);
+    st.g.si = undone < 0 ? 0 : undone;
+  }
+  const root = document.getElementById('guide');
+  root.classList.add('open');
+  root.setAttribute('aria-hidden', 'false');
+  guideBind();
+  if (st.g.running) guideArm();
+  guideRender();
+}
+function guideExit() {
+  const st = guideState();
+  if (st && st.g.running) {
+    st.g.running = false;
+    st.g.pausedAt = Date.now();
+    save();
+  }
+  try { timerWake(false); } catch(e) {}
+  if (guideTimer) clearInterval(guideTimer);
+  guideTimer = null;
+  const root = document.getElementById('guide');
+  root.classList.remove('open');
+  root.setAttribute('aria-hidden', 'true');
+  try { buildWorkout(); } catch(e) {}
+  try { renderWorkoutCal(); } catch(e) {}
+  try { updatePRs(); } catch(e) {}
+  try { drawRmChart(); } catch(e) {}
+}
+function guideStart() {
+  const st = guideState();
+  if (!st) return;
+  const g = st.g;
+  const now = Date.now();
+  if (!g.startedAt) {
+    g.startedAt = now;
+    g.pausedMs = 0;
+    g.setFrom = now;
+    g.setPaused = 0;
+    g.finished = false;
+  }
+  if (g.pausedAt) {
+    const gap = now - g.pausedAt;
+    g.pausedMs = (g.pausedMs || 0) + gap;
+    g.setPaused = (g.setPaused || 0) + gap;
+    if (g.restUntil) g.restUntil += gap;
+    if (g.cardioEnd) g.cardioEnd += gap;
+    g.pausedAt = null;
+  }
+  g.running = true;
+  if (g.finished) g.finished = false;
+  const ex = effectiveEx(st.day.exercises[g.ei] || st.day.exercises[0]);
+  if (ex && ex.cardioItem) {
+    const sets = ensureExerciseSets(st.day.key, ex).sets;
+    if (sets[0] && !sets[0].done && !g.cardioEnd) g.cardioEnd = now + guidePlan(ex).minutes * 60000;
+  }
+  save();
+  try { timerWake(true); } catch(e) {}
+  guideArm();
+  guideRender();
+}
+function guidePause() {
+  const st = guideState();
+  if (!st || !st.g.startedAt) return;
+  if (!st.g.running) { guideStart(); return; }
+  st.g.running = false;
+  st.g.pausedAt = Date.now();
+  save();
+  try { timerWake(false); } catch(e) {}
+  guideRender();
+}
+function guideList(on) {
+  guideShowList = on !== false;
+  guideRender();
+}
+function guideJump(ei) {
+  const st = guideState();
+  if (!st) return;
+  guideShowList = false;
+  st.g.ei = ei;
+  const ex = effectiveEx(st.day.exercises[ei]);
+  const sets = ensureExerciseSets(st.day.key, ex).sets;
+  const undone = sets.findIndex(s => s && !s.done);
+  st.g.si = undone < 0 ? 0 : undone;
+  st.g.restUntil = 0;
+  st.g.setFrom = Date.now();
+  st.g.setPaused = 0;
+  if (ex.cardioItem && st.g.running && sets[0] && !sets[0].done && !st.g.cardioEnd) {
+    st.g.cardioEnd = Date.now() + guidePlan(ex).minutes * 60000;
+  }
+  save();
+  guideRender();
+}
+function guideNudge(dir) {
+  const st = guideState();
+  if (!st || !st.g.startedAt || st.g.finished || guideShowList) return;
+  const sets = ensureExerciseSets(st.day.key, effectiveEx(st.day.exercises[st.g.ei])).sets;
+  let si = st.g.si + dir;
+  let ei = st.g.ei;
+  if (si < 0 || si >= sets.length) {
+    ei = st.g.ei + dir;
+    if (ei < 0 || ei >= st.day.exercises.length) return;
+    const ns = ensureExerciseSets(st.day.key, effectiveEx(st.day.exercises[ei])).sets;
+    si = dir > 0 ? 0 : Math.max(0, ns.length - 1);
+  }
+  st.g.ei = ei;
+  st.g.si = si;
+  st.g.restUntil = 0;
+  st.g.setFrom = Date.now();
+  st.g.setPaused = 0;
+  save();
+  guideRender();
+}
+function guideEdit(field, value) {
+  const st = guideState();
+  if (!st) return;
+  const ex = effectiveEx(st.day.exercises[st.g.ei]);
+  const sets = ensureExerciseSets(st.day.key, ex).sets;
+  const s = sets[st.g.si];
+  if (!s) return;
+  s[field] = value;
+  if (s.done) s.pf = false;
+  save();
+}
+function guideComplete() {
+  const st = guideState();
+  if (!st || st.g.finished) return;
+  if (!st.g.startedAt) guideStart();
+  const ex = effectiveEx(st.day.exercises[st.g.ei]);
+  const sets = ensureExerciseSets(st.day.key, ex).sets;
+  const s = sets[st.g.si];
+  if (!s) return;
+  const wEl = document.getElementById('guide-w');
+  const rEl = document.getElementById('guide-r');
+  if (wEl) s.w = wEl.value;
+  if (rEl) s.r = rEl.value;
+  s.done = true;
+  s.pf = false;
+  const plan = guidePlan(ex);
+  if (plan.kind === 'reps' && plan.rest) {
+    st.g.restUntil = Date.now() + plan.rest * 1000;
+    guideBeepMark = -1;
+  }
+  save();
+  try { updatePRs(); } catch(e) {}
+  try { renderWorkoutCal(); } catch(e) {}
+  const next = guideAdvance(st.day, st.g.ei, st.g.si);
+  if (!next) { guideFinish(); return; }
+  st.g.ei = next.ei;
+  st.g.si = next.si;
+  st.g.setFrom = Date.now();
+  st.g.setPaused = 0;
+  const nex = effectiveEx(st.day.exercises[next.ei]);
+  if (nex.cardioItem) {
+    const ns = ensureExerciseSets(st.day.key, nex).sets;
+    if (ns[0] && !ns[0].done && !st.g.cardioEnd) st.g.cardioEnd = Date.now() + guidePlan(nex).minutes * 60000;
+  }
+  save();
+  guideRender();
+}
+function guideSkipRest() {
+  const st = guideState();
+  if (!st) return;
+  st.g.restUntil = 0;
+  save();
+  guideRender();
+}
+function guideRestFor(sec) {
+  const st = guideState();
+  if (!st) return;
+  st.g.restUntil = Date.now() + sec * 1000;
+  guideBeepMark = -1;
+  save();
+  guideRender();
+}
+function guideFinish() {
+  const st = guideState();
+  if (!st) return;
+  if (!st.dd.done) st.dd.done = true;
+  st.g.finished = true;
+  st.g.running = false;
+  if (!st.g.pausedAt) st.g.pausedAt = Date.now();
+  st.g.restUntil = 0;
+  save();
+  try { timerWake(false); } catch(e) {}
+  try { renderWorkoutCal(); } catch(e) {}
+  try { updatePRs(); } catch(e) {}
+  try { drawRmChart(); } catch(e) {}
+  guideRender();
+}
+function guideTotals(day) {
+  let n = 0, volume = 0;
+  day.exercises.forEach(raw => {
+    const ex = effectiveEx(raw);
+    const list = (dayData(day.key).sets || {})[ex.id] || [];
+    list.forEach(s => {
+      if (!s || !s.done || s.pf) return;
+      n++;
+      const w = parseFloat(s.w) || 0, r = parseFloat(s.r) || 0;
+      if (w && r) volume += w * r;
+    });
+  });
+  return { sets:n, volume };
+}
+function guideNewPrs(day) {
+  const names = [];
+  day.exercises.forEach(raw => {
+    const ex = effectiveEx(raw);
+    if (ex.cardioItem) return;
+    const sets = (dayData(day.key).sets || {})[ex.id] || [];
+    if (checkPR(ex.id, sets)) names.push(ex.name);
+  });
+  return names;
+}
+function guidePaintClocks() {
+  const st = guideState();
+  if (!st) return;
+  const clock = document.getElementById('guide-clock');
+  const sub = document.getElementById('guide-setclock');
+  if (clock) clock.textContent = st.g.startedAt ? fmtUp(guideSessionMs(st.g)) : '00:00';
+  if (sub) {
+    if (!st.g.startedAt || st.g.finished || guideShowList) sub.textContent = st.g.pausedAt && st.g.startedAt ? 'Paused' : '';
+    else sub.textContent = (st.g.running ? 'Set ' : 'Paused ') + fmtUp(guideSetMs(st.g));
+  }
+  const rest = document.getElementById('guide-rest-num');
+  if (rest && st.g.restUntil) rest.textContent = fmtClock(Math.max(0, st.g.restUntil - Date.now()));
+  const cardio = document.getElementById('guide-cardio-num');
+  if (cardio && st.g.cardioEnd) cardio.textContent = fmtClock(Math.max(0, st.g.cardioEnd - Date.now()));
+}
+function guideTick() {
+  const st = guideState();
+  if (!st) return;
+  guidePaintClocks();
+  if (!st.g.running) return;
+  if (st.g.restUntil) {
+    const left = st.g.restUntil - Date.now();
+    const sec = Math.ceil(left / 1000);
+    if (sec !== guideBeepMark && sec <= 3 && sec >= 0) {
+      guideBeepMark = sec;
+      timerBeep(sec === 0 ? 0 : sec);
+    }
+    if (left <= 0) { st.g.restUntil = 0; save(); guideRender(); return; }
+  }
+  const ex = effectiveEx(st.day.exercises[st.g.ei] || st.day.exercises[0]);
+  if (ex && ex.cardioItem && st.g.cardioEnd && !st.g.restUntil) {
+    const left = st.g.cardioEnd - Date.now();
+    const sec = Math.ceil(left / 1000);
+    if (sec !== guideBeepMark && sec <= 3 && sec >= 0) {
+      guideBeepMark = sec;
+      timerBeep(sec === 0 ? 0 : sec);
+    }
+    if (left <= 0) {
+      st.g.cardioEnd = 0;
+      const sets = ensureExerciseSets(st.day.key, ex).sets;
+      if (sets[0] && !sets[0].done) {
+        sets[0].done = true;
+        sets[0].pf = false;
+        save();
+        const next = guideAdvance(st.day, st.g.ei, 0);
+        if (!next) { guideFinish(); return; }
+        st.g.ei = next.ei;
+        st.g.si = next.si;
+        st.g.setFrom = Date.now();
+        st.g.setPaused = 0;
+        save();
+      }
+      guideRender();
+    }
+  }
+}
+function guideRows(st) {
+  return st.day.exercises.map((raw, i) => {
+    const ex = effectiveEx(raw);
+    const plan = guidePlan(ex);
+    const sets = ensureExerciseSets(st.day.key, ex).sets;
+    const done = sets.length && sets.every(s => s && s.done);
+    const ss = guideGroup(st.day, i);
+    return `<button type="button" class="guide-row ${i===st.g.ei?'on':''}" onclick="guideJump(${i})">
+      <div style="flex:1"><b>${esc(ex.name)}</b><span>${esc(plan.kind==='time' ? plan.label : plan.count+' sets · '+plan.label)}${ss.length>1?' · Superset':''}</span></div>
+      <div>${done?'✓':''}</div>
+    </button>`;
+  }).join('');
+}
+function guideRender() {
+  const st = guideState();
+  const body = document.getElementById('guide-body');
+  const dots = document.getElementById('guide-dots');
+  const pause = document.getElementById('guide-pause');
+  if (!st || !body) return;
+  if (pause) {
+    pause.innerHTML = st.g.running
+      ? '<svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>';
+    pause.setAttribute('aria-label', st.g.running ? 'Pause' : 'Resume');
+  }
+  const dotHtml = st.day.exercises.map((raw, i) => {
+    const ex = effectiveEx(raw);
+    const sets = ensureExerciseSets(st.day.key, ex).sets;
+    const done = sets.length && sets.every(s => s && s.done);
+    const cls = done ? 'done' : (i === st.g.ei ? 'on' : '');
+    return `<button type="button" class="guide-dot ${cls}" onclick="guideJump(${i})" aria-label="${esc(ex.name)}"></button>`;
+  }).join('');
+  if (dots) dots.innerHTML = dotHtml;
+  if (st.g.finished && !guideShowList) {
+    const tot = guideTotals(st.day);
+    const prs = guideNewPrs(st.day);
+    body.innerHTML = `<div class="guide-kicker">${esc(st.day.title)}</div>
+      <h1 class="guide-title">Session done</h1>
+      <div class="guide-sum">
+        <div><b>${fmtUp(guideSessionMs(st.g))}</b><span>Total time</span></div>
+        <div><b>${tot.sets}</b><span>Sets</span></div>
+        <div><b>${Math.round(tot.volume).toLocaleString()}</b><span>Volume, lb</span></div>
+        <div><b>${prs.length}</b><span>New PRs</span></div>
+      </div>
+      ${prs.length ? '<div class="guide-note">'+prs.map(esc).join('<br>')+'</div>' : '<div class="guide-note">This workout is marked done for the day.</div>'}
+      <button type="button" class="guide-go" onclick="guideExit()">Close</button>`;
+    guidePaintClocks();
+    return;
+  }
+  if (!st.g.startedAt || guideShowList) {
+    body.innerHTML = `<div class="guide-kicker">${esc(st.day.focus)}</div>
+      <h1 class="guide-title">${esc(st.day.title)}</h1>
+      <div class="guide-note">${st.g.startedAt ? 'Jump to any exercise. Progress stays saved.' : 'Swipe through every set. Checking a set logs it with the rest of the workout.'}</div>
+      <div class="guide-list">${guideRows(st)}</div>
+      ${st.g.startedAt ? '<button type="button" class="guide-go" onclick="guideList(false)">Back to the set</button>' : '<button type="button" class="guide-go" onclick="guideStart()">Start</button>'}`;
+    guidePaintClocks();
+    return;
+  }
+  const ex = effectiveEx(st.day.exercises[st.g.ei]);
+  const plan = guidePlan(ex);
+  const sets = ensureExerciseSets(st.day.key, ex).sets;
+  const s = sets[st.g.si] || {w:'',r:'',done:false};
+  const partner = (() => {
+    const group = guideGroup(st.day, st.g.ei);
+    if (group.length < 2) return '';
+    return group.filter(i => i !== st.g.ei).map(i => effectiveEx(st.day.exercises[i]).name).join(' · ');
+  })();
+  const resting = st.g.restUntil && st.g.restUntil > Date.now();
+  const pips = sets.map((row, i) => `<i class="guide-pip ${row&&row.done?'done':''} ${i===st.g.si?'on':''}"></i>`).join('');
+  if (plan.kind === 'time') {
+    body.innerHTML = `<div class="guide-cardio">
+      <div class="guide-kicker">Cardio</div>
+      <h1 class="guide-title">${esc(ex.name)}</h1>
+      <b id="guide-cardio-num">${fmtClock(Math.max(0, (st.g.cardioEnd||0) - Date.now()))}</b>
+      <div class="guide-note">${esc(plan.label)} countdown</div>
+      <button type="button" class="guide-check ${s.done?'on':''}" onclick="guideComplete()">${s.done?'Done':'Mark complete'}</button>
+    </div>`;
+    guidePaintClocks();
+    return;
+  }
+  const lastTip = findLastSets(ex.id);
+  const tip = lastTip ? suggestLoad(ex, lastTip.sets, lastTip.date) : null;
+  const note = tip && tip.note ? tip.note : (s.w ? 'Suggested ' + s.w + ' lb' : '');
+  body.innerHTML = `<div class="guide-stage">
+    ${resting ? `<div class="guide-rest"><div class="guide-kicker">Rest</div><b id="guide-rest-num">${fmtClock(st.g.restUntil - Date.now())}</b>
+      <div class="guide-chips">
+        <button type="button" onclick="guideRestFor(30)">30s</button>
+        <button type="button" onclick="guideRestFor(60)">60s</button>
+        <button type="button" onclick="guideRestFor(90)">90s</button>
+        <button type="button" onclick="guideRestFor(120)">120s</button>
+        <button type="button" class="guide-skip" onclick="guideSkipRest()">Skip</button>
+      </div>
+    </div>` : ''}
+    <div class="guide-kicker">Set ${st.g.si + 1} of ${sets.length}</div>
+    <h1 class="guide-title">${esc(ex.name)}</h1>
+    <div class="guide-note">Target ${esc(plan.label)}${note ? ' · '+esc(note) : ''}</div>
+    ${partner ? `<div class="guide-ss">Superset · ${esc(partner)}</div>` : ''}
+    <div class="guide-pips">${pips}</div>
+    <div class="guide-fields">
+      <label>Weight<input id="guide-w" inputmode="decimal" value="${esc(s.w)}" oninput="guideEdit('w', this.value)"></label>
+      <label>Reps<input id="guide-r" inputmode="decimal" value="${esc(s.r)}" oninput="guideEdit('r', this.value)"></label>
+    </div>
+    <button type="button" class="guide-check ${s.done?'on':''}" onclick="guideComplete()"><svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7"/></svg>${s.done ? 'Done' : 'Complete set'}</button>
+    <div class="guide-nav">
+      <button type="button" onclick="guideNudge(-1)" aria-label="Previous set"><svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg></button>
+      <button type="button" onclick="guideNudge(1)" aria-label="Next set"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>`;
+  guidePaintClocks();
 }
 (function init(){
   markHomeScreen();
