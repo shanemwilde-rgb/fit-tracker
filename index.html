@@ -69,15 +69,16 @@ body[data-theme="forest"]{
 }
 body[data-theme="volt"]{
   --bg:#0E0E0E; --ink:#FAFAFA; --card:#1A1A1A;
-  --hdr:#111111; --navy:#D4FF00; --on-accent:#111111;
-  --orange:#ff8a3d; --gold:#e6c07b; --green:#D4FF00;
+  --hdr:#111111; --accent:#D4FF00; --navy:var(--accent); --on-accent:#111111;
+  --orange:#ff8a3d; --gold:#e6c07b; --green:var(--accent);
   --red:#f0564a; --purple:#c4b5fd;
   --muted:#BCBCBC; --border:#2A2A2A; --chip:#242424;
   --card-hover:#222222; --exbody:#141414;
-  --water-on:#1a2410; --water-on-b:#D4FF00; --wg1:#D4FF00; --wg2:#D4FF00;
+  --water-on:#1a2410; --water-on-b:var(--accent); --wg1:var(--accent); --wg2:var(--accent);
   --swap-cur:#1c2410;
   color-scheme:dark;
 }
+body[data-theme="volt"][data-accent="blue"]{--accent:#00E5FF;}
 body[data-theme="volt"] .bnav{background:#0A0A0A;}
 body[data-theme="volt"] .bnav-btn.active{color:var(--navy);}
 .wk-streak{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700;}
@@ -850,6 +851,15 @@ html.standalone .bnav{min-height:72px;}
   letter-spacing:1px;text-transform:uppercase;color:var(--muted);
 }
 .theme-opt.on .theme-name{color:var(--navy);}
+.volt-accent{margin-top:14px;}
+.accent-picks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.accent-picks button{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border:1.5px solid var(--border);background:transparent;color:var(--ink);
+  border-radius:999px;padding:9px 10px;cursor:pointer;font-size:13px;font-weight:600;
+}
+.accent-picks button.on{border-color:var(--accent);}
+.accent-sw{width:16px;height:16px;border-radius:50%;display:block;}
 .sr-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:12px 0 4px;}
 .sr-note{padding:12px 0;font-size:12px;color:var(--muted);font-style:italic;}
 /* Barcode scanner */
@@ -878,7 +888,7 @@ html.standalone .bnav{min-height:72px;}
   font-size:11px;line-height:1.45;word-break:break-all;
   background:var(--chip);border-radius:8px;padding:8px 10px;margin:0 0 10px;
 }
-/* Volt type. Other themes keep Barlow. Accent fills stay solid #D4FF00. */
+/* Volt type. Other themes keep Barlow. Accent fills use solid --accent. */
 body[data-theme="volt"]{
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,sans-serif;
   -webkit-font-smoothing:antialiased;
@@ -1193,6 +1203,13 @@ body[data-theme="volt"] .weight-log-btn:hover{opacity:1;}
       <h3>🎨 Theme</h3>
       <div class="chart-sub">Pick a color scheme — it saves automatically.</div>
       <div class="theme-row" id="theme-row"></div>
+      <div class="volt-accent" id="volt-accent" hidden>
+        <div class="chart-sub">Volt accent</div>
+        <div class="accent-picks" role="group" aria-label="Volt accent">
+          <button type="button" data-accent="yellow" onclick="setVoltAccent('yellow')"><span class="accent-sw" style="background:#D4FF00"></span>Neon Yellow</button>
+          <button type="button" data-accent="blue" onclick="setVoltAccent('blue')"><span class="accent-sw" style="background:#00E5FF"></span>Neon Blue</button>
+        </div>
+      </div>
     </div>
     <div class="chart-card" style="margin-top:10px">
       <h3>💾 Data Backup</h3>
@@ -3004,16 +3021,40 @@ function applyTheme(id) {
   renderProgress(); // redraw chart with new colors
   showToast('🎨 Theme: '+(THEMES.find(t=>t.id===id)?.name||id));
 }
+const VOLT_ACCENTS = { yellow:'#D4FF00', blue:'#00E5FF' };
+function voltAccentId() { return ST && ST.voltAccent === 'blue' ? 'blue' : 'yellow'; }
+function applyVoltAccent() {
+  document.body.dataset.accent = voltAccentId();
+  const box = document.getElementById('volt-accent');
+  if(box) box.hidden = (ST.theme || 'classic') !== 'volt';
+  document.querySelectorAll('.accent-picks button').forEach(btn => {
+    const on = btn.dataset.accent === voltAccentId();
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+function setVoltAccent(id) {
+  ST.voltAccent = id === 'blue' ? 'blue' : 'yellow';
+  save();
+  applyVoltAccent();
+  renderThemes();
+  try { updateBudget(); } catch(e) {}
+  try { renderProgress(); } catch(e) {}
+}
 function renderThemes() {
   const row = document.getElementById('theme-row');
   if(!row) return;
   const cur = ST.theme || 'classic';
-  row.innerHTML = THEMES.map(t=>`
+  const accent = VOLT_ACCENTS[voltAccentId()];
+  row.innerHTML = THEMES.map(t=>{
+    const sw = t.id === 'volt' ? ['#111111', accent, '#0E0E0E'] : t.sw;
+    return `
     <button class="theme-opt ${t.id===cur?'on':''}" onclick="applyTheme('${t.id}')">
-      <span class="theme-sw">${t.sw.map(c=>`<span style="background:${c}"></span>`).join('')}</span>
+      <span class="theme-sw">${sw.map(c=>`<span style="background:${c}"></span>`).join('')}</span>
       <span class="theme-name">${t.name}</span>
-    </button>
-  `).join('');
+    </button>`;
+  }).join('');
+  applyVoltAccent();
 }
 function syncThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
@@ -3023,8 +3064,14 @@ function syncThemeColor() {
   meta.setAttribute('content', theme === 'volt' ? '#111111' : (hdr || '#1a3a5c'));
 }
 function themeColor(varName, fallback) {
-  const v = getComputedStyle(document.body).getPropertyValue(varName).trim();
-  return v || fallback;
+  const probe = document.createElement('span');
+  probe.style.color = 'var(' + varName + ')';
+  document.body.appendChild(probe);
+  const c = getComputedStyle(probe).color;
+  probe.remove();
+  const m = String(c).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if(!m) return fallback;
+  return '#' + [m[1], m[2], m[3]].map(n => (+n).toString(16).padStart(2, '0')).join('');
 }
 function uiFont(size) {
   const stack = document.body.dataset.theme === 'volt'
@@ -4079,6 +4126,7 @@ function saveAmrap() {
   if(migrated) save();
   if(!ST.theme) ST.theme = 'volt'; // Volt is the default on this branch
   if(ST.theme!=='classic') document.body.setAttribute('data-theme', ST.theme);
+  document.body.dataset.accent = voltAccentId();
   try { syncThemeColor(); } catch(e) {}
   const dt = new Date(viewDate+'T12:00:00');
   const map = {1:0,2:1,3:2,4:3,5:4};
