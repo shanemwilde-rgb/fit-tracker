@@ -85,8 +85,14 @@ body[data-theme="volt"] .modal-title,
 body[data-theme="volt"] .cal-month,
 body[data-theme="volt"] h3,
 body[data-theme="volt"] .section-title{
-  font-family:'Saira Expanded','Barlow Condensed',sans-serif;
+  font-family:'Saira Expanded',sans-serif;
+  font-weight:800;
   text-transform:uppercase;
+  color:#FAFAFA;
+}
+body[data-theme="volt"] .hdr h1 em{
+  color:#E5FF00;
+  font-style:normal;
 }
 body[data-theme="volt"] .bnav{background:#0A0A0A;}
 body[data-theme="volt"] .bnav-btn.active{color:#E5FF00;}
@@ -123,11 +129,13 @@ body[data-theme="volt"] .bnav-btn.active{color:#E5FF00;}
 .badge b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:16px;}
 .timer-overlay{
   position:fixed;inset:0;z-index:400;background:var(--bg);color:var(--ink);
-  display:none;flex-direction:column;align-items:center;
+  display:none !important;flex-direction:column;align-items:center;
   padding:calc(18px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px));
   overflow:auto;
 }
-.timer-overlay.open{display:flex;}
+.timer-overlay.open{display:flex !important;}
+.modal-overlay:not(.open){display:none !important;}
+.rest-offer:not(.open){display:none !important;}
 .timer-top{width:100%;max-width:420px;display:flex;justify-content:space-between;align-items:center;}
 .timer-top button,.timer-modes button,.timer-actions button,.timer-presets button,.rest-offer button,.timer-log button{
   border:1px solid var(--border);background:var(--card);color:var(--ink);border-radius:999px;
@@ -188,9 +196,9 @@ body{
   position:relative;
 }
 /* ── SCREENS ── */
-.screen{display:none;animation:fadeUp .22s ease;}
-.screen.active{display:block;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.screen{display:none;opacity:1;}
+.screen.active{display:block;opacity:1;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{transform:translateY(8px);}to{transform:translateY(0);}}
 /* ── BOTTOM NAV ── */
 .bnav{
   position:fixed;bottom:0;left:0;right:0;
