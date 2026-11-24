@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Saira+Expanded:wght@800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,800;125,900&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #f4f1eb;
@@ -69,33 +69,17 @@ body[data-theme="forest"]{
 }
 body[data-theme="volt"]{
   --bg:#0E0E0E; --ink:#FAFAFA; --card:#1A1A1A;
-  --hdr:#111111; --navy:#E5FF00; --on-accent:#111111;
-  --orange:#ff8a3d; --gold:#e6c07b; --green:#E5FF00;
+  --hdr:#111111; --navy:#D4FF00; --on-accent:#111111;
+  --orange:#ff8a3d; --gold:#e6c07b; --green:#D4FF00;
   --red:#f0564a; --purple:#c4b5fd;
   --muted:#BCBCBC; --border:#2A2A2A; --chip:#242424;
   --card-hover:#222222; --exbody:#141414;
-  --water-on:#1a2410; --water-on-b:#E5FF00; --wg1:#E5FF00; --wg2:#9bb800;
+  --water-on:#1a2410; --water-on-b:#D4FF00; --wg1:#D4FF00; --wg2:#D4FF00;
   --swap-cur:#1c2410;
   color-scheme:dark;
 }
-body[data-theme="volt"] .hdr h1,
-body[data-theme="volt"] .day-title,
-body[data-theme="volt"] .wk-month,
-body[data-theme="volt"] .modal-title,
-body[data-theme="volt"] .cal-month,
-body[data-theme="volt"] h3,
-body[data-theme="volt"] .section-title{
-  font-family:'Saira Expanded',sans-serif;
-  font-weight:800;
-  text-transform:uppercase;
-  color:#FAFAFA;
-}
-body[data-theme="volt"] .hdr h1 em{
-  color:#E5FF00;
-  font-style:normal;
-}
 body[data-theme="volt"] .bnav{background:#0A0A0A;}
-body[data-theme="volt"] .bnav-btn.active{color:#E5FF00;}
+body[data-theme="volt"] .bnav-btn.active{color:var(--navy);}
 .wk-streak{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700;}
 .volt-hero{
   display:flex;align-items:center;gap:12px;
@@ -110,7 +94,7 @@ body[data-theme="volt"] .bnav-btn.active{color:#E5FF00;}
 .volt-hero-mark::after{width:10px;height:10px;right:8px;bottom:8px;background:var(--gold);}
 .volt-hero-copy{flex:1;min-width:0;}
 .volt-hero-kicker{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:800;}
-.volt-hero-title{font-family:'Saira Expanded','Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase;line-height:1;}
+.volt-hero-title{font-size:18px;text-transform:uppercase;line-height:1;}
 .volt-hero-focus{font-size:12px;color:var(--muted);margin-top:2px;}
 .goal-picks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
 .goal-picks button{
@@ -149,7 +133,7 @@ body[data-theme="volt"] .bnav-btn.active{color:#E5FF00;}
 .timer-arc{fill:none;stroke:var(--navy);stroke-width:8;stroke-linecap:round;}
 .timer-digits{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-family:'Saira Expanded','Barlow Condensed',sans-serif;font-weight:800;font-size:54px;
+  font-weight:800;font-size:54px;font-variant-numeric:tabular-nums;
 }
 .timer-sub{color:var(--muted);min-height:20px;}
 .timer-round{
@@ -894,6 +878,96 @@ html.standalone .bnav{min-height:72px;}
   font-size:11px;line-height:1.45;word-break:break-all;
   background:var(--chip);border-radius:8px;padding:8px 10px;margin:0 0 10px;
 }
+/* Volt type. Other themes keep Barlow. Accent fills stay solid #D4FF00. */
+body[data-theme="volt"]{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+body[data-theme="volt"] *{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,sans-serif;
+  font-stretch:normal;
+  letter-spacing:0;
+}
+body[data-theme="volt"] .widget-key{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+body[data-theme="volt"] .hdr h1,
+body[data-theme="volt"] .day-title,
+body[data-theme="volt"] .wk-month,
+body[data-theme="volt"] .modal-title,
+body[data-theme="volt"] .cal-month,
+body[data-theme="volt"] h3,
+body[data-theme="volt"] .volt-hero-title{
+  font-family:Archivo,sans-serif;
+  font-stretch:expanded;
+  font-weight:800;
+  letter-spacing:-0.02em;
+  text-transform:uppercase;
+  color:#FAFAFA;
+}
+body[data-theme="volt"] .hdr h1{font-weight:900;}
+body[data-theme="volt"] .hdr h1 em{
+  color:var(--navy);
+  font-style:normal;
+  font-family:Archivo,sans-serif;
+  font-stretch:expanded;
+  font-weight:900;
+  letter-spacing:-0.02em;
+}
+body[data-theme="volt"] .section-title,
+body[data-theme="volt"] .hdr-eye,
+body[data-theme="volt"] .bnav-btn,
+body[data-theme="volt"] .donut-lbl,
+body[data-theme="volt"] .mc-label,
+body[data-theme="volt"] .bs-label,
+body[data-theme="volt"] .volt-hero-kicker,
+body[data-theme="volt"] .sets-tbl th,
+body[data-theme="volt"] .wk-dow,
+body[data-theme="volt"] .wk-range,
+body[data-theme="volt"] .cf-label,
+body[data-theme="volt"] .ci-label,
+body[data-theme="volt"] .ds-lbl,
+body[data-theme="volt"] .sr-label,
+body[data-theme="volt"] .cal-dow div,
+body[data-theme="volt"] .week-toggle button,
+body[data-theme="volt"] .day-focus,
+body[data-theme="volt"] .super-tag,
+body[data-theme="volt"] .goal-picks button{
+  font-weight:600;
+  letter-spacing:.04em;
+}
+body[data-theme="volt"] .donut-cal,
+body[data-theme="volt"] .mc-val,
+body[data-theme="volt"] .bs-val,
+body[data-theme="volt"] .ex-best,
+body[data-theme="volt"] .sri-cal,
+body[data-theme="volt"] .water-count,
+body[data-theme="volt"] .ds-val,
+body[data-theme="volt"] .wl-val,
+body[data-theme="volt"] .pr-val,
+body[data-theme="volt"] .timer-digits,
+body[data-theme="volt"] .nring-num,
+body[data-theme="volt"] .wk-num,
+body[data-theme="volt"] .badge b{
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0;
+}
+body[data-theme="volt"] .meal-add-btn,
+body[data-theme="volt"] .day-tab.done,
+body[data-theme="volt"] .mark-done-btn:not(.done),
+body[data-theme="volt"] .sdone.on,
+body[data-theme="volt"] .wk-day.selected .wk-num,
+body[data-theme="volt"] .wk-day.selected.done .wk-num,
+body[data-theme="volt"] .wk-day.complete .wk-num,
+body[data-theme="volt"] .wk-check,
+body[data-theme="volt"] .nring.today .nring-num,
+body[data-theme="volt"] .nring-check,
+body[data-theme="volt"] .cal-cell.selected .cn{color:#111;}
+body[data-theme="volt"] .wk-day.complete .wk-check{color:var(--green);background:#fff;}
+body[data-theme="volt"] .mark-done-btn:hover,
+body[data-theme="volt"] .scan-btn:hover,
+body[data-theme="volt"] .cf-submit:hover,
+body[data-theme="volt"] .ds-btn:hover,
+body[data-theme="volt"] .weight-log-btn:hover{opacity:1;}
 </style>
 </head>
 <body>
@@ -2824,7 +2898,7 @@ function drawChart(weights) {
   ctx.clearRect(0,0,W,H);
   const P=themeColor('--navy','#1a3a5c'), G=themeColor('--green','#2a8a4a'), O=themeColor('--orange','#c8421a'), M=themeColor('--muted','#888'), C=themeColor('--card','#fff');
   if(!weights.length){
-    ctx.fillStyle=M; ctx.font='13px Barlow,sans-serif';
+    ctx.fillStyle=M; ctx.font=uiFont(13);
     ctx.textAlign='center';
     ctx.fillText('Log your weight to see chart',W/2,H/2);
     return;
@@ -2840,12 +2914,12 @@ function drawChart(weights) {
   // goal line
   ctx.beginPath(); ctx.strokeStyle=hexRgba(G,.35); ctx.setLineDash([4,4]); ctx.lineWidth=1.5;
   ctx.moveTo(pad.l,yS(pr.goalW)); ctx.lineTo(W-pad.r,yS(pr.goalW)); ctx.stroke();
-  ctx.setLineDash([]); ctx.fillStyle=hexRgba(G,.65); ctx.font='9px Barlow,sans-serif';
+  ctx.setLineDash([]); ctx.fillStyle=hexRgba(G,.65); ctx.font=uiFont(9);
   ctx.fillText('Goal '+pr.goalW,pad.l+4,yS(pr.goalW)-4);
   // start line
   ctx.beginPath(); ctx.strokeStyle=hexRgba(O,.3); ctx.setLineDash([4,4]); ctx.lineWidth=1;
   ctx.moveTo(pad.l,yS(pr.startW)); ctx.lineTo(W-pad.r,yS(pr.startW)); ctx.stroke();
-  ctx.setLineDash([]); ctx.fillStyle=hexRgba(O,.6); ctx.font='9px Barlow,sans-serif';
+  ctx.setLineDash([]); ctx.fillStyle=hexRgba(O,.6); ctx.font=uiFont(9);
   ctx.fillText('Start '+pr.startW,pad.l+4,yS(pr.startW)-4);
   if(weights.length>1){
     // gradient fill
@@ -2868,12 +2942,12 @@ function drawChart(weights) {
     ctx.fillStyle=C; ctx.fill();
   });
   // y labels
-  ctx.fillStyle=M; ctx.font='9px Barlow,sans-serif'; ctx.textAlign='right';
+  ctx.fillStyle=M; ctx.font=uiFont(9); ctx.textAlign='right';
   [Math.round(minY),Math.round((minY+maxY)/2),Math.round(maxY)].forEach(v=>{
     ctx.fillText(v,pad.l-4,yS(v)+3);
   });
   // x labels
-  ctx.textAlign='center'; ctx.fillStyle=M; ctx.font='9px Barlow,sans-serif';
+  ctx.textAlign='center'; ctx.fillStyle=M; ctx.font=uiFont(9);
   const fmt=d=>{ const dt=new Date(d+'T12:00:00'); return (dt.getMonth()+1)+'/'+dt.getDate(); };
   ctx.fillText(fmt(weights[0].date),xS(0),H-6);
   if(weights.length>1) ctx.fillText(fmt(weights[weights.length-1].date),xS(weights.length-1),H-6);
@@ -2913,7 +2987,7 @@ function updatePRs() {
 // THEMES
 // ══════════════════════════════════════
 const THEMES = [
-  {id:'volt',     name:'Volt',     sw:['#111111','#E5FF00','#0E0E0E']},
+  {id:'volt',     name:'Volt',     sw:['#111111','#D4FF00','#0E0E0E']},
   {id:'classic',  name:'Classic',  sw:['#1a3a5c','#f0a500','#f4f1eb']},
   {id:'midnight', name:'Midnight', sw:['#14181c','#39d47f','#0f1214']},
   {id:'ocean',    name:'Ocean',    sw:['#0b3550','#0e7490','#eef4f7']},
@@ -2951,6 +3025,12 @@ function syncThemeColor() {
 function themeColor(varName, fallback) {
   const v = getComputedStyle(document.body).getPropertyValue(varName).trim();
   return v || fallback;
+}
+function uiFont(size) {
+  const stack = document.body.dataset.theme === 'volt'
+    ? "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif"
+    : 'Barlow, sans-serif';
+  return size + 'px ' + stack;
 }
 function hexRgba(hex, a) {
   let h = hex.replace('#','');
@@ -3735,7 +3815,7 @@ function drawRmChart() {
   ctx.clearRect(0,0,W,H);
   const M=themeColor('--muted','#888'), P=themeColor('--navy','#1a3a5c'), C=themeColor('--card','#fff');
   if(rows.length < 1){
-    ctx.fillStyle=M; ctx.font='13px Barlow,sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle=M; ctx.font=uiFont(13); ctx.textAlign='center';
     ctx.fillText('Log sets to see estimated 1RM', W/2, H/2);
     return;
   }
@@ -3748,7 +3828,7 @@ function drawRmChart() {
   rows.forEach((r,i)=>{ i?ctx.lineTo(xS(i), yS(r.orm)):ctx.moveTo(xS(i), yS(r.orm)); });
   ctx.stroke();
   rows.forEach((r,i)=>{ ctx.beginPath(); ctx.arc(xS(i), yS(r.orm), 4, 0, Math.PI*2); ctx.fillStyle=P; ctx.fill(); ctx.beginPath(); ctx.arc(xS(i), yS(r.orm), 2, 0, Math.PI*2); ctx.fillStyle=C; ctx.fill(); });
-  ctx.fillStyle=M; ctx.font='11px Barlow,sans-serif'; ctx.textAlign='left';
+  ctx.fillStyle=M; ctx.font=uiFont(11); ctx.textAlign='left';
   ctx.fillText(rows[rows.length-1].orm+' lb', pad.l, 12);
 }
 let timerState = { mode:'amrap', running:false, endAt:0, durationMs:5*60*1000, rounds:0, workMs:60*1000, restMs:60*1000, totalRounds:8, phase:'work', phaseEnd:0, roundIndex:0, lastBeep:-1, wake:null, tick:null };
