@@ -179,7 +179,8 @@ function modelFrom(result) {
     stale: true,
     note: "no meals logged yet",
     kind: "ready",
-    last7: []
+    last7: [],
+    nudge: ""
   };
   if (!result || result.error || !result.fields) {
     if (result && result.error === "setup") {
@@ -216,7 +217,8 @@ function modelFrom(result) {
     stale: false,
     note: "",
     kind: "ready",
-    last7: last7
+    last7: last7,
+    nudge: strField(fields, "nudge")
   };
 }
 
@@ -461,6 +463,7 @@ function paintSmall(dc, w, h, pal, model) {
   if (rem.note) text(dc, rem.note, 8, 96, w - 16, 13, Font.mediumSystemFont(10), pal.warn, "center");
   text(dc, rem.big, 8, rem.note ? 110 : 112, w - 16, 26, Font.boldRoundedSystemFont(24), rem.color, "center");
   text(dc, rem.sub, 8, rem.note ? 136 : 138, w - 16, 14, Font.mediumSystemFont(11), pal.muted, "center");
+  if (model.nudge) text(dc, model.nudge, 6, h - 16, w - 12, 14, Font.mediumSystemFont(9), pal.low, "center");
 }
 
 function paintMedium(dc, w, h, pal, model) {
@@ -471,6 +474,7 @@ function paintMedium(dc, w, h, pal, model) {
   text(dc, rem.big, 6, rem.note ? 102 : 108, 140, 24, Font.boldRoundedSystemFont(22), rem.color, "center");
   text(dc, rem.sub, 6, rem.note ? 124 : 130, 140, 13, Font.mediumSystemFont(10), pal.muted, "center");
   if (rem.note) text(dc, rem.note, 6, 142, 140, 12, Font.mediumSystemFont(8), pal.warn, "center");
+  if (model.nudge) text(dc, model.nudge, 8, h - 16, w - 16, 14, Font.mediumSystemFont(9), pal.low, "center");
   drawBars(dc, 160, 10, w - 172, h - 18, weekSeries(model), model.calorieGoal, pal, "calories");
 }
 
@@ -486,6 +490,7 @@ function paintLarge(dc, w, h, pal, model) {
   const chartH = Math.floor((h - chartY - 14) / 2);
   drawBars(dc, 16, chartY, w - 32, chartH, days, model.calorieGoal, pal, "calories");
   drawBars(dc, 16, chartY + chartH + 6, w - 32, chartH, days, model.proteinGoal, pal, "protein");
+  if (model.nudge) text(dc, model.nudge, 16, h - 16, w - 32, 14, Font.mediumSystemFont(10), pal.low, "left");
 }
 
 function renderFace(family, model, dark) {
