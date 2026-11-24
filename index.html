@@ -705,7 +705,45 @@ html.standalone .bnav{min-height:72px;}
 /* ═══════════════════════════════════════════
    CALENDAR SCREEN
 ═══════════════════════════════════════════ */
-#screen-calendar{padding:0 0 20px;}
+#screen-plan{padding:0 0 20px;}
+.plan-wrap{padding:0 14px 8px;}
+.plan-sum{margin:12px 2px 10px;font-size:13px;font-weight:700;color:var(--muted);}
+.plan-sum em{font-style:normal;color:var(--navy);}
+.plan-day{display:flex;align-items:stretch;gap:6px;margin-bottom:8px;}
+.plan-hit{
+  flex:1;display:flex;align-items:center;gap:10px;text-align:left;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  color:var(--ink);padding:10px 12px;cursor:pointer;min-width:0;
+}
+.plan-day.today .plan-hit{border-color:var(--navy);}
+.plan-dow{width:36px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
+.plan-dow b{display:block;font-size:18px;color:var(--ink);letter-spacing:0;font-variant-numeric:tabular-nums;}
+.plan-main{flex:1;min-width:0;}
+.plan-main b{display:block;font-size:15px;font-weight:800;}
+.plan-main span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plan-status{font-size:12px;font-weight:700;color:var(--muted);}
+.plan-status.done,.plan-check{color:var(--navy);}
+.plan-status.missed{color:var(--orange);}
+.plan-dial{width:22px;height:22px;flex:0 0 22px;}
+.plan-dial svg{width:22px;height:22px;transform:rotate(-90deg);}
+.plan-track{fill:none;stroke:var(--border);stroke-width:2.5;}
+.plan-arc{fill:none;stroke:var(--navy);stroke-width:2.5;stroke-linecap:round;}
+.plan-move{
+  border:1px solid var(--border);background:var(--card);color:var(--ink);
+  border-radius:14px;padding:0 10px;font-size:12px;font-weight:700;cursor:pointer;
+}
+.plan-fold{
+  width:100%;margin:4px 0 10px;padding:12px;border-radius:14px;cursor:pointer;
+  border:1px solid var(--border);background:var(--card);color:var(--ink);
+  display:flex;justify-content:space-between;font-weight:700;
+}
+.plan-picks{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 8px;}
+.plan-picks button{
+  border:1px solid var(--border);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700;
+}
+.plan-picks button.on{background:var(--navy);color:var(--on-accent);border-color:var(--navy);}
+.plan-sheet-note{padding:0 16px 8px;color:var(--muted);font-size:13px;}
 .cal-wrap{padding:0 14px;}
 .cal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:16px;}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -1193,29 +1231,32 @@ body[data-theme="volt"] .weight-log-btn:hover{opacity:1;}
 <!-- ════════════════════════════════════════
   CALENDAR SCREEN
 ════════════════════════════════════════ -->
-<div class="screen" id="screen-calendar">
+<div class="screen" id="screen-plan">
   <div class="hdr">
-    <div class="hdr-eye">Full History</div>
-    <h1>Your<br><em>Calendar</em></h1>
-    <p class="hdr-sub">Every day is saved — tap any date to view or edit it</p>
+    <div class="hdr-eye">Schedule</div>
+    <h1>Your<br><em>Plan</em></h1>
+    <p class="hdr-sub" id="plan-summary">This week</p>
     <div class="hdr-date" id="c-date">—</div>
   </div>
-  <div class="cal-wrap">
-    <div class="cal-card">
-      <div class="cal-nav">
-        <button class="cal-arrow" onclick="calShift(-1)">‹</button>
-        <div class="cal-month" id="cal-month">—</div>
-        <button class="cal-arrow" onclick="calShift(1)">›</button>
+  <div class="plan-wrap" id="plan-body"></div>
+  <div id="plan-history" hidden>
+    <div class="cal-wrap">
+      <div class="cal-card">
+        <div class="cal-nav">
+          <button class="cal-arrow" onclick="calShift(-1)">‹</button>
+          <div class="cal-month" id="cal-month">—</div>
+          <button class="cal-arrow" onclick="calShift(1)">›</button>
+        </div>
+        <div class="cal-dow"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+          <div><span class="cal-dot food"></span>Food logged</div>
+          <div><span class="cal-dot work"></span>Workout done</div>
+          <div><span class="cal-dot wt"></span>Weigh-in</div>
+        </div>
       </div>
-      <div class="cal-dow"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
-      <div class="cal-grid" id="cal-grid"></div>
-      <div class="cal-legend">
-        <div><span class="cal-dot food"></span>Food logged</div>
-        <div><span class="cal-dot work"></span>Workout done</div>
-        <div><span class="cal-dot wt"></span>Weigh-in</div>
-      </div>
+      <div class="ds-card" id="cal-day-summary"></div>
     </div>
-    <div class="ds-card" id="cal-day-summary"></div>
   </div>
 </div>
 <!-- ════════════════════════════════════════
@@ -1313,9 +1354,19 @@ body[data-theme="volt"] .weight-log-btn:hover{opacity:1;}
   <button class="bnav-btn active" onclick="goScreen('nutrition',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8.2c.4-1.8 1.8-3.4 3.6-3.6"/><path d="M12 8.4c-1.2-1.3-3-1.6-4.2-.6"/><path d="M7.6 10.2C5.6 11.2 4.2 13.4 4.2 15.8 4.2 18.8 6.4 21 9 21c1.1 0 2-.4 3-.4s1.9.4 3 .4c2.6 0 4.8-2.2 4.8-5.2 0-2.4-1.4-4.6-3.4-5.6-1.1-.6-2.3-.6-3.4 0-1.1-.6-2.3-.6-3.4 0-.6.3-1.3.4-2 .4z"/></svg></span>Nutrition</button>
   <button class="bnav-btn" onclick="goScreen('workout',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12h20"/><path d="M5 8.5v7"/><path d="M8 6.5v11"/><path d="M16 6.5v11"/><path d="M19 8.5v7"/></svg></span>Workout</button>
   <button class="bnav-plus" onclick="centerPlus()" aria-label="Add"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
-  <button class="bnav-btn" onclick="goScreen('calendar',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16"/><path d="M8 3.5V7"/><path d="M16 3.5V7"/></svg></span>Calendar</button>
+  <button class="bnav-btn" onclick="goScreen('plan',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3.5h6"/><rect x="6" y="5" width="12" height="15" rx="2"/><path d="M9 12.5l2 2 4-4"/></svg></span>Plan</button>
   <button class="bnav-btn" onclick="goScreen('progress',this)"><span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5 9 11l3.2 3.2L20 6.5"/><path d="M14.5 6.5H20V12"/></svg></span>Progress</button>
 </nav>
+<div class="modal-overlay" id="plan-sheet" onclick="closePlanSheet(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="plan-sheet-title">Move</div>
+    <p class="plan-sheet-note" id="plan-sheet-note"></p>
+    <div class="plan-picks" id="plan-sheet-workouts"></div>
+    <p class="plan-sheet-note">Move or swap with another day. A day that already has a workout swaps.</p>
+    <div class="plan-picks" id="plan-sheet-days"></div>
+  </div>
+</div>
 <div class="guide" id="guide" aria-hidden="true">
   <div class="guide-top">
     <button type="button" class="guide-icon" onclick="guideExit()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -1739,9 +1790,9 @@ function nutrData() {
 }
 function setViewDate(ds) {
   viewDate = ds;
+  const scheduled = scheduledDay(ds);
+  if(scheduled) activeDay = DAYS_DATA.indexOf(scheduled);
   const dt = new Date(ds+'T12:00:00');
-  const map = {1:0,2:1,3:2,4:3,5:4}; // getDay() -> mon..fri tab index
-  if(map[dt.getDay()] !== undefined) activeDay = map[dt.getDay()];
   calYear = dt.getFullYear(); calMonth = dt.getMonth();
   wWeekStart = weekStartOf(ds);
   refreshAll();
@@ -1753,7 +1804,7 @@ function refreshAll() {
   buildMealBlocks(); updateBudget(); buildWater();
   buildWorkout();
   renderProgress();
-  renderCalendar();
+  renderPlan();
 }
 // ══════════════════════════════════════
 // NAV
@@ -1764,10 +1815,11 @@ function goScreen(name, btn) {
   document.getElementById('screen-'+name).classList.add('active');
   btn.classList.add('active');
   if(name==='progress') renderProgress();
-  if(name==='calendar') renderCalendar();
+  if(name==='plan' || name==='calendar') renderPlan();
 }
 function openScreenTab(name) {
-  const idx = {nutrition:0, workout:1, calendar:2, progress:3}[name];
+  if(name==='calendar') name = 'plan';
+  const idx = {nutrition:0, workout:1, plan:2, progress:3}[name];
   goScreen(name, document.querySelectorAll('.bnav-btn')[idx]);
 }
 // ══════════════════════════════════════
@@ -2480,6 +2532,25 @@ function weekStartOf(ds) {
   const dt = new Date(ds+'T12:00:00');
   return addDaysStr(ds, -dt.getDay());
 }
+function defaultPlanKey(ds) {
+  return {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri'}[new Date(ds+'T12:00:00').getDay()] || 'rest';
+}
+function planKeyFor(ds) {
+  const saved = ST && ST.plan && ST.plan[ds];
+  if (saved === 'rest' || saved === 'mon' || saved === 'tue' || saved === 'wed' || saved === 'thu' || saved === 'fri') return saved;
+  return defaultPlanKey(ds);
+}
+function scheduledDay(ds) {
+  const key = planKeyFor(ds);
+  if (key === 'rest') return null;
+  return DAYS_DATA.find(d => d.key === key) || null;
+}
+function writePlan(ds, key) {
+  if (!ST.plan) ST.plan = {};
+  if (key === defaultPlanKey(ds)) delete ST.plan[ds];
+  else ST.plan[ds] = key;
+  if (!Object.keys(ST.plan).length) delete ST.plan;
+}
 let wWeekStart = weekStartOf(todayReal());
 function wkShift(n) {
   wWeekStart = addDaysStr(wWeekStart, n*7);
@@ -2529,10 +2600,8 @@ function renderWorkoutCal() {
   }).join('');
 }
 function workoutDayProgress(ds) {
-  const dt = new Date(ds+'T12:00:00');
-  const idx = {1:0,2:1,3:2,4:3,5:4}[dt.getDay()];
-  if(idx === undefined) return null;
-  const day = DAYS_DATA[idx];
+  const day = scheduledDay(ds);
+  if(!day) return null;
   const rec = ST[ds] && ST[ds][day.key];
   const items = day.exercises || [];
   let done = 0;
@@ -2550,16 +2619,14 @@ function selectWorkoutDay(ds) {
 function buildWorkout() {
   renderWorkoutCal();
   const panels = document.getElementById('day-panels');
-  const dt = new Date(viewDate+'T12:00:00');
-  const map = {1:0,2:1,3:2,4:3,5:4};
-  const idx = map[dt.getDay()];
-  if(idx === undefined) {
-    const label = dt.toLocaleDateString('en-US',{weekday:'long'});
-    panels.innerHTML = `<div class="rest-card"><b>😴 Rest Day</b>No scheduled workout on ${label}s — recovery is part of the program.</div>`;
+  const day = scheduledDay(viewDate);
+  if(!day) {
+    const label = new Date(viewDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'});
+    panels.innerHTML = `<div class="rest-card"><b>Rest</b>No workout scheduled for ${label}. Recovery is part of the plan.</div>`;
     return;
   }
+  const idx = DAYS_DATA.indexOf(day);
   activeDay = idx;
-  const day = DAYS_DATA[idx];
   panels.innerHTML = `<div class="day-panel active" id="dp-${idx}">${buildPanel(day, idx)}</div>`;
 }
 function buildPanel(day, idx) {
@@ -2846,6 +2913,143 @@ function daySetsLogged(rec) {
     return dd && dd.sets && Object.values(dd.sets).some(ss=>ss.some(s=>!s.pf&&((s.w&&parseFloat(s.w)>0)||(s.r&&parseFloat(s.r)>0))));
   });
 }
+let planShowNext = false;
+let planShowHistory = false;
+let planSheetDate = null;
+function planTitle(key) {
+  if (key === 'rest') return 'Rest';
+  const day = DAYS_DATA.find(d => d.key === key);
+  return day ? day.title : 'Rest';
+}
+function planStatus(ds) {
+  const day = scheduledDay(ds);
+  const tr = todayReal();
+  if (!day) return { label: ds === tr ? 'Today' : 'Rest', cls: ds === tr ? 'today' : '' };
+  const prog = workoutDayProgress(ds);
+  const rec = ST[ds] && ST[ds][day.key];
+  const full = !!(prog && prog.total && prog.done === prog.total) || !!(rec && rec.done);
+  const partial = !!(prog && prog.done > 0 && !full);
+  const pct = prog && prog.total ? Math.round(100 * prog.done / prog.total) : 0;
+  if (full) return { label: 'Done', cls: 'done' };
+  if (ds === tr) return { label: partial ? pct + '%' : 'Today', cls: 'today' };
+  if (ds < tr) return { label: partial ? pct + '%' : 'Missed', cls: partial ? '' : 'missed' };
+  return { label: 'Upcoming', cls: '' };
+}
+function planMeter(ds) {
+  const prog = workoutDayProgress(ds);
+  if (!prog || !prog.total) return '';
+  if (prog.done === prog.total) return '<span class="plan-check">✓</span>';
+  if (prog.done > 0) {
+    const circ = 2 * Math.PI * 10;
+    const offset = circ * (1 - prog.done / prog.total);
+    return `<span class="plan-dial"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="plan-track" cx="12" cy="12" r="10"></circle><circle class="plan-arc" cx="12" cy="12" r="10" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"></circle></svg></span>`;
+  }
+  return '';
+}
+function planWeekRows(start) {
+  const tr = todayReal();
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const ds = addDaysStr(start, i);
+    const day = scheduledDay(ds);
+    const st = planStatus(ds);
+    const dt = new Date(ds + 'T12:00:00');
+    const title = day ? day.title : 'Rest';
+    const focus = day ? String(day.focus || '').split('·')[0].trim() : 'Recovery';
+    const today = ds === tr;
+    const upcoming = ds >= tr;
+    const click = today ? `openPlanToday()` : (upcoming ? `openPlanSheet('${ds}')` : `openPlanPast('${ds}')`);
+    html += `<div class="plan-day ${today ? 'today' : ''} ${st.cls}">
+      <button type="button" class="plan-hit" onclick="${click}">
+        <span class="plan-dow">${dt.toLocaleDateString('en-US',{weekday:'short'})}<b>${dt.getDate()}</b></span>
+        <span class="plan-main"><b>${esc(title)}</b><span>${esc(focus)}</span></span>
+        ${planMeter(ds)}
+        <span class="plan-status ${st.cls}">${esc(st.label)}</span>
+      </button>
+      ${upcoming ? `<button type="button" class="plan-move" onclick="openPlanSheet('${ds}')">Move</button>` : ''}
+    </div>`;
+  }
+  return html;
+}
+function renderPlan() {
+  const body = document.getElementById('plan-body');
+  const sum = document.getElementById('plan-summary');
+  if (!body) return;
+  const info = weekStreak();
+  const easy = easyWeekNow();
+  if (sum) sum.textContent = info.thisWeek + ' of 3 workouts · ' + info.weeks + '-week streak' + (easy ? ' · Easy week' : '');
+  const start = weekStartOf(todayReal());
+  const next = addDaysStr(start, 7);
+  const nextLabel = new Date(next + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})
+    + ' – ' + new Date(addDaysStr(next, 6) + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  body.innerHTML = `<div class="plan-sum">This week${easy ? ' · <em>Easy week</em>' : ''}</div>
+    ${planWeekRows(start)}
+    <button type="button" class="plan-fold" onclick="planShowNext=!planShowNext;renderPlan()">Next week · ${esc(nextLabel)} <span>${planShowNext ? 'Hide' : 'Show'}</span></button>
+    ${planShowNext ? planWeekRows(next) : ''}
+    <button type="button" class="plan-fold" onclick="planShowHistory=!planShowHistory;renderPlan()">History <span>${planShowHistory ? 'Hide' : 'Show'}</span></button>`;
+  const hist = document.getElementById('plan-history');
+  if (hist) hist.hidden = !planShowHistory;
+  if (planShowHistory) renderCalendar();
+}
+function openPlanToday() {
+  const ds = todayReal();
+  setViewDate(ds);
+  openScreenTab('workout');
+  if (scheduledDay(ds)) openGuide();
+}
+function openPlanPast(ds) {
+  planShowHistory = true;
+  setViewDate(ds);
+  openScreenTab('plan');
+}
+function openPlanSheet(ds) {
+  if (ds < todayReal()) return;
+  planSheetDate = ds;
+  const key = planKeyFor(ds);
+  const dt = new Date(ds + 'T12:00:00');
+  document.getElementById('plan-sheet-title').textContent = dt.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  document.getElementById('plan-sheet-note').textContent = planTitle(key) + (key === 'rest' ? '' : ' is scheduled. Pick a workout, or move it.');
+  const keys = [['mon','Push A'],['tue','Pull A'],['wed','Legs + Core'],['thu','Push B'],['fri','Pull B'],['rest','Rest']];
+  document.getElementById('plan-sheet-workouts').innerHTML = keys.map(k =>
+    `<button type="button" class="${k[0]===key?'on':''}" onclick="choosePlan('${ds}','${k[0]}')">${k[1]}</button>`
+  ).join('');
+  const start = weekStartOf(todayReal());
+  const days = [];
+  for (let i = 0; i < 14; i++) {
+    const other = addDaysStr(start, i);
+    if (other < todayReal() || other === ds) continue;
+    const ok = planKeyFor(other);
+    const verb = ok === 'rest' ? 'Move to' : 'Swap with';
+    const when = new Date(other + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    days.push(`<button type="button" onclick="movePlan('${ds}','${other}')">${verb} ${when} · ${esc(planTitle(ok))}</button>`);
+  }
+  document.getElementById('plan-sheet-days').innerHTML = days.join('');
+  document.getElementById('plan-sheet').classList.add('open');
+}
+function closePlanSheet(e) {
+  if (e && e.target && e.target.id !== 'plan-sheet') return;
+  const sheet = document.getElementById('plan-sheet');
+  if (sheet) sheet.classList.remove('open');
+}
+function choosePlan(ds, key) {
+  writePlan(ds, key);
+  save();
+  closePlanSheet();
+  renderPlan();
+  buildWorkout();
+  try { renderWorkoutCal(); } catch(err) {}
+}
+function movePlan(from, to) {
+  const a = planKeyFor(from);
+  const b = planKeyFor(to);
+  writePlan(from, b);
+  writePlan(to, a);
+  save();
+  closePlanSheet();
+  renderPlan();
+  buildWorkout();
+  try { renderWorkoutCal(); } catch(err) {}
+}
 function renderCalendar() {
   const grid = document.getElementById('cal-grid');
   if(!grid) return;
@@ -2877,8 +3081,9 @@ function renderCalendar() {
   renderDaySummary();
 }
 function selectCalDay(ds) {
+  planShowHistory = true;
   setViewDate(ds);
-  openScreenTab('calendar'); // stay on calendar, refresh selection + summary
+  openScreenTab('plan');
 }
 function renderDaySummary() {
   const el = document.getElementById('cal-day-summary');
@@ -4184,13 +4389,12 @@ function hideRestOffer() {
 function saveAmrap() {
   const ds = today();
   if(!ST[ds] || typeof ST[ds] !== 'object') ST[ds] = {};
-  const dt = new Date(ds+'T12:00:00');
-  const idx = {1:0,2:1,3:2,4:3,5:4}[dt.getDay()];
   const reps = parseFloat(document.getElementById('amrap-reps').value)||0;
   const rec = { rounds: timerState.rounds, reps: reps, seconds: Math.round(timerState.durationMs/1000), at: Date.now() };
-  if(idx === undefined) ST[ds].amrap = rec;
+  const scheduled = scheduledDay(ds);
+  if(!scheduled) ST[ds].amrap = rec;
   else {
-    const key = DAYS_DATA[idx].key;
+    const key = scheduled.key;
     if(!ST[ds][key]) ST[ds][key] = {sets:{},cardio:{},done:false};
     ST[ds][key].amrap = rec;
   }
@@ -4259,10 +4463,10 @@ function ensureExerciseSets(dk, ex) {
   return { sets, prefilled, note };
 }
 function guideDay() {
-  const dt = new Date((typeof viewDate === 'string' ? viewDate : today()) + 'T12:00:00');
-  const idx = {1:0,2:1,3:2,4:3,5:4}[dt.getDay()];
-  if (idx === undefined) return null;
-  return { idx, day: DAYS_DATA[idx] };
+  const ds = typeof viewDate === 'string' ? viewDate : today();
+  const day = scheduledDay(ds);
+  if (!day) return null;
+  return { idx: DAYS_DATA.indexOf(day), day };
 }
 function guideState() {
   const ctx = guideDay();
@@ -4771,16 +4975,16 @@ function guideRender() {
   if(ST.theme!=='classic') document.body.setAttribute('data-theme', ST.theme);
   document.body.dataset.accent = voltAccentId();
   try { syncThemeColor(); } catch(e) {}
-  const dt = new Date(viewDate+'T12:00:00');
-  const map = {1:0,2:1,3:2,4:3,5:4};
-  if(map[dt.getDay()] !== undefined) activeDay = map[dt.getDay()];
-  calYear = dt.getFullYear(); calMonth = dt.getMonth();
+  const openingDay = scheduledDay(viewDate);
+  if(openingDay) activeDay = DAYS_DATA.indexOf(openingDay);
+  calYear = new Date(viewDate+'T12:00:00').getFullYear();
+  calMonth = new Date(viewDate+'T12:00:00').getMonth();
   updateDateUI();
   buildMealBlocks();
   updateBudget();
   buildWater();
   buildWorkout();
-  renderCalendar();
+  renderPlan();
   renderProgress();
   renderThemes();
   applyProfileUI();
